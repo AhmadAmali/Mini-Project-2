@@ -4,11 +4,7 @@ import pymongo
 
 port = input("please enter the port you'd like to run the database on: ")
 client = pymongo.MongoClient("localhost", 27017)
-db_name = "291db"
-db = client.db_name
-print(db.name)
-
-
+db = client.project
 
 def postQuestion():
     continue
