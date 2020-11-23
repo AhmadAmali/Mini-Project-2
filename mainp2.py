@@ -8,7 +8,7 @@ def mainMenu():
 	if user.lower() != 'a':
 		displayReport(user)
 	menuCondition = True
-	task = input("""Select the task you would like to perform. You can also type 0 to exit\n 
+	task = input("""Select the task you would like to perform. You can also type E to exit\n 
     (P): Post a Question\n 
     (S): Search for Question\n
     (0): Exit Program\n""")
@@ -19,7 +19,7 @@ def mainMenu():
 		elif task.lower() == 's':  # search for a post
 		    menuCondition = False
 		    searchQuestion(user)
-		elif task.lower() == '0':  # exit program
+		elif task.lower() == 'e':  # exit program
 		    quit()
 		else:
 		    task = input("You inputted an incorrect choice, please try again: ")
@@ -28,10 +28,9 @@ def mainMenu():
 def specificMenu(user, questionId):
 	
 	menuCondition = True
-	task = input("""Select the task you would like to perform. You can also type 0 to exit\n 
+	task = input("""Select the task you would like to perform. You can also type E to exit\n 
     (A): Post an Answer\n 
-    (L): List Answers for the Post\n 
-    (V): Vote on this Post\n 
+    (L): List Answers for the Post\n
     (R): Return to Main Menu\n""")
 	while menuCondition:
 		if task.lower() == 'a':  # add an answer
@@ -39,14 +38,11 @@ def specificMenu(user, questionId):
 		    answerQuestion(user, questionId)
 		elif task.lower() == 'l':  # list the answers
 		    menuCondition = False
-		    listAnswers(questionId)
-		elif task.lower() == 'v':  # vote for the post
-		    menuCondition = False
-		    addVote(user, questionId)
+		    listAnswers(user, questionId)
 		elif task.lower() == 'r':  # return to main menu
 		    menuCondition = False
 		    mainMenu(user)
-		elif task.lower() == '0':  # exit program
+		elif task.lower() == 'e':  # exit program
 		    quit()
 		else:
 		    task = input("You inputted an incorrect choice, please try again: ")
@@ -68,7 +64,7 @@ def newPostId():
 def postQuestion(user):
 	title = input("Please enter your question title: ")
 	body = input("Please enter your question body: ")
-	Tags = input("please enter the tags associated with the post, if multiple, seperate with comma: ")
+	Tags = input("Please enter the tags associated with the post, if multiple, seperate with comma: ")
 	Tags = "".join(Tags.split())
 	Tags = Tags.split(",") # returns a list with the seperated tags as such, if the input was: "<question>, <test>" Output would be ['<question>', '<test>']
 	posts = db["posts"]
@@ -88,6 +84,8 @@ def postQuestion(user):
 	                     "ContentLicense": "CC BY-SA 2.5"
 	                     }
 	posts.insert_one(newQuestion)
+	print("New question added successfully")
+	mainMenu()
     
 def searchQuestion(user):
 	specificMenu(user, questionId)
@@ -95,7 +93,7 @@ def searchQuestion(user):
 def answerQuestion(user, questionId):
 	text = input("Enter the text for your answer: ")
 	posts = db["posts"]
-	newAnswer = {   "Id": newPostId(),
+	newAnswer = 	{"Id": newPostId(),
 					"PostTypeId": "2", 
 					"ParentId": questionId, 
 					"CreationDate": date('now'), 
@@ -106,12 +104,59 @@ def answerQuestion(user, questionId):
 					"CommentCount": 0,
 					"ContentLicense": "CC BY-SA 2.5"}
 	posts.insert_one(newAnswer)
+	print("New answer added successfully")
+	mainMenu()
     
-def listAnswers(questionId):
-    pass
+def listAnswers(user, questionId):
+	#return the specific question document
+	question = db.posts.find({"Id": questionId})
+	#find the accepted answer for that question
+	accId = question["AcceptedAnswerId"]
+	accAnswer = db.posts.find({"Id": accId})
+	#print the accepted answer
+	text = accAnswer["Body"]
+	date = accAnswer["CreationDate"]
+	score = accAnswer["Score"]
+	print("Answer "+ accId + "* Body: " + '%.80s' %  text) #only prints up to 80 characters
+	print("Answer "+ accId + "* Creation Date: " + date)
+	print("Answer "+ accId + "* Score: " + score)
+	#print the rest of the answers
+	answers = db.posts.find({"ParentId": questionId})
+	for answer in answers:
+		aid = answer["Id"]
+		if aid == accId: #skip printing the accepted answer
+			continue
+		text = answer["Body"]
+		date = answer["CreationDate"]
+		score = answer["Score"]
+		print("Answer "+aid+" Body: " + '%.80s' % text) #only prints up to 80 characters
+		print("Answer "+aid+" Creation Date: " + date)
+		print("Answer "+aid+" Score: " + score)
+	#allow user to select answer to print full document
+	aidSelect = input("Select an answer by typing its id as shown above: ")
+    result = db.posts.find({"Id": aidSelect})
+    print(result)
+    #allow user to vote on the answer or return to main menu
+    task = input("""Select an action: 
+    	(V): Vote on Answer\n 
+    	(R): Return to Main Menu\n
+    	(E): Exit Program\n""")
+    menuCondition = true
+    while menuCondition:
+		if task.lower() == 'v':  # add an vote
+		    menuCondition = False
+		    addVote(user, aidSelect)
+		elif task.lower() == 'r':  # return to main menu
+		    menuCondition = False
+		    mainMenu(user)
+		elif task.lower() == 'e':  # exit program
+		    quit()
+		else:
+		    task = input("You inputted an incorrect choice, please try again: ")
+		    continue
 
-def addVote(user, questionId):
-    pass
+def addVote(user, answerId):
+	mainMenu(user)
 
 def main():
 	port = input("Please enter the port you'd like to run the database on: ")
