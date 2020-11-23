@@ -66,7 +66,28 @@ def newPostId():
 	pass
 
 def postQuestion(user):
-	pass
+	title = input("Please enter your question title: ")
+	body = input("Please enter your question body: ")
+	Tags = input("please enter the tags associated with the post, if multiple, seperate with comma: ")
+	Tags = "".join(Tags.split())
+	Tags = Tags.split(",") # returns a list with the seperated tags as such, if the input was: "<question>, <test>" Output would be ['<question>', '<test>']
+	posts = db["posts"]
+	newQuestion =       {"Id": newPostId(),
+	                     "PostTypeId": "1",
+	                     "CreationDate": date('now'),
+	                     "Score": 0,
+	                     "ViewCount": 0,
+	                     "Body": body,
+	                     "OwnerUserId": "11",
+	                     "LastActivityDate": date('now'),
+	                     "Title": title,
+	                     "Tags": Tags,
+	                     "AnswerCount": 0,
+	                     "CommentCount": 0,
+	                     "FavoriteCount": 0,
+	                     "ContentLicense": "CC BY-SA 2.5"
+	                     }
+	posts.insert_one(newQuestion)
     
 def searchQuestion(user):
 	specificMenu(user, questionId)
@@ -85,7 +106,6 @@ def answerQuestion(user, questionId):
 					"CommentCount": 0,
 					"ContentLicense": "CC BY-SA 2.5"}
 	posts.insert_one(newAnswer)
-	pass
     
 def listAnswers(questionId):
     pass
