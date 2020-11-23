@@ -108,15 +108,23 @@ def answerQuestion(user, questionId):
 	posts.insert_one(newAnswer)
     
 def listAnswers(questionId):
-    pass
+	pass
 
 def addVote(user, questionId):
-    pass
+	votes = db["Votes"]
+	newVote = {"Id": newPostId(),
+	           "PostId": questionId,
+	           "VoteTypeId": "2",
+	           "UserId": user,
+	           "CreationDate": date('now')
+	           }
+	Votes.insert_one(newVote)
+	
 
 def main():
 	port = input("Please enter the port you'd like to run the database on: ")
 	client = pymongo.MongoClient("localhost", 27017)
-	db = client.project	
+	db = client['291db']	
 	mainMenu() 
 	
 if __name__ == "__main__":
