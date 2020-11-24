@@ -3,7 +3,7 @@
 import pymongo
 
 
-def mainMenu():
+def mainMenu(db):
     user = input("Enter your user id now or type 'a' to continue anonymously: ")
     if user.lower() != 'a':
         displayReport(user)
@@ -15,7 +15,7 @@ def mainMenu():
     while menuCondition:
         if task.lower() == 'p':  # add a question
             menuCondition = False
-            postQuestion(user)
+            postQuestion(user, db)
         elif task.lower() == 's':  # search for a post
             menuCondition = False
             searchQuestion(user)
@@ -55,52 +55,52 @@ def specificMenu(user, questionId):
 def displayReport(user):
     print("User report for " + user + "...\n")
     # questions = all question posts owned by the user
-    questions = db.posts.find( $and:[ {"OwnerUserId": user},{"PostTypeId": "1"} ] )
+    #questions = db.posts.find("$and":[{"OwnerUserId": user},{"PostTypeId": "1"}])
     # count number of questions owned
-    countAggr = questions.aggregate( { $count: "qcount" } )
+    countAggr = questions.aggregate({ "$count": "qcount" })
     count = countAggr["qcount"]
     print("Number of questions owned: " + count)
     # find average score for questions
-    scoreAggr = questions.aggregate( { average: { $avg: "$score" } } )
+    scoreAggr = questions.aggregate({average:{ "$avg": "$score" }})
     avgScore = scoreAggr["average"]
     print("Average score for questions: " + avgScore)
     # answers = all answer posts owned by the user
-    answers = db.posts.find( $and:[ {"OwnerUserId": user},{"PostTypeId": "2"} ] )
+    #answers = db.posts.find("$and":[{"OwnerUserId": user},{"PostTypeId": "2"}])
     # count number of answers owned
-    countAggr = answers.aggregate( { $count: "acount" } )
+    countAggr = answers.aggregate({ "$count": "acount" })
     count = countAggr["acount"]
     print("Number of answers owned: " + count)
     # find average score for answers
-    scoreAggr = answers.aggregate( { average: { $avg: "$score" } } )
+    scoreAggr = answers.aggregate( { average: { "$avg": "$score" } } )
     avgScore = scoreAggr["average"]
     print("Average score for answers: " + avgScore)
     # count number of votes where userid = user
     votes = db.votes.find( {"UserId": user} )
-    countAggr = votes.aggregate( { $count: "vcount" } )
+    countAggr = votes.aggregate( { "$count": "vcount" } )
     count = countAggr["vcount"]
     print("Number of votes: " + count)
 
 #search for current largest post id and increment by 1
 def newPostId():
 	#returns document: {"Id": max}
-    maxDoc = db.posts.aggregate( Id: {$max : "$Id"} )
+    #maxDoc = db.posts.aggregate( Id: {"$max" : "$Id"} )
     maxId = max_doc["Id"]
     return maxId+1
 
 #search for current largest vote id and increment by 1
 def newVoteId():
 	#returns document: {"Id": max}
-    maxDoc = db.votes.aggregate( Id: {$max : "$Id"} )
+    #maxDoc = db.votes.aggregate( Id: {$max : "$Id"} )
     maxId = max_doc["Id"]
     return maxId+1
 
-def postQuestion(user):
+def postQuestion(user, db):
     title = input("Please enter your question title: ")
     body = input("Please enter your question body: ")
     Tags = input("Please enter the tags associated with the post, if multiple, seperate with comma: ")
     Tags = "".join(Tags.split())
     Tags = Tags.split(",") # returns a list with the seperated tags as such, if the input was: "<question>, <test>" Output would be ['<question>', '<test>']
-    posts = db["posts"]
+    posts = db["Posts"]
     newQuestion =       {"Id": newPostId(),
                          "PostTypeId": "1",
                          "CreationDate": date('now'),
@@ -204,7 +204,7 @@ def main():
     port = input("Please enter the port you'd like to run the database on: ")
     client = pymongo.MongoClient("localhost", 27017)
     db = client['291db']
-    mainMenu()
+    mainMenu(db)
 
 if __name__ == "__main__":
     main()
