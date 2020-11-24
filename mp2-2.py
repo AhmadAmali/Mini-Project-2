@@ -21,7 +21,7 @@ def createCollections(db):
     # create new collections
     posts = db["Posts"]
     tags = db["Tags"]
-    votes = db["Customers"]
+    votes = db["Votes"]
 
     # read json files and insert them into collections
     with open('Posts.json') as file:
@@ -42,19 +42,7 @@ def createCollections(db):
             print(i)
             votes.insert_one(json.loads(json.dumps(i)))
 
-        # with open('Posts.json') as file:
-        # 	file_data = json.load(file)
-        # posts.insert_one(file_data['posts'])
-        # with open('Tags.json') as file:
-        # 	file_data = json.load(file)
-        # # print(file_data['tags'])
-        # tags.insert_one(file_data['tags'])
-        # with open('Votes.json') as file:
-        # 	file_data = json.load(file)
-        # votes.insert_one(file_data['votes'])
-
         colList = db.list_collection_names()
-
         if "tags" in colList:
             print("Tags collection created successfully.\n")
         if "posts" in colList:
