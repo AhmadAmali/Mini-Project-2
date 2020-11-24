@@ -21,16 +21,35 @@ def createCollections(db):
 	votes = db["Customers"]
 	
 	#read json files and insert them into collections
-	with open('Posts.json') as file:
+	#with open('Posts.json') as file:
+	#	file_data = json.load(file)
+	#posts.insert_one(file_data)
+	with open('Tags.json') as file:
 		file_data = json.load(file)
-	posts.insert_one(file_data)
-	# with open('Tags.json') as file:
-	# 	file_data = json.load(file)
-	# tags.insert_one(file_data)
+	tags.insert_one(file_data)
 	# with open('Votes.json') as file:
 	# 	file_data = json.load(file)
 	# votes.insert_one(file_data)
 
+	colList = db.list_collection_names()
+	if "Tags" in colList:
+		print("Tags collection created successfully.\n")
+
+	createTerms(db)
+
+def createTerms(db):
+	posts = db.posts
+	for post in posts:
+		body = post["Body"].split()
+		title = post["Title"].split()
+		for word in body:
+			if len(word) >= 3:
+				terms.insert(0, word) # add to array
+				#do indexing here as you add to array
+		for word in title:
+			if len(word) >= 3:
+				terms.insert(0, word) # add to array
+				#do indexing here as you add to array
 
 def main():
 	# port = input("Please enter the port you'd like to run the database on: ")
