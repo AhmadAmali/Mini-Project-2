@@ -52,14 +52,47 @@ def specificMenu(user, questionId):
 #(1) the number of questions owned and the average score for those questions, 
 #(2) the number of answers owned and the average score for those answers, and 
 #(3) the number of votes registered for the user
-
 def displayReport(user):
-    pass
-
+    print("User report for " + user + "...\n")
+    # questions = all question posts owned by the user
+    questions = db.posts.find( $and:[ {"OwnerUserId": user},{"PostTypeId": "1"} ] )
+    # count number of questions owned
+    countAggr = questions.aggregate( { $count: "qcount" } )
+    count = countAggr["qcount"]
+    print("Number of questions owned: " + count)
+    # find average score for questions
+    scoreAggr = questions.aggregate( { average: { $avg: "$score" } } )
+    avgScore = scoreAggr["average"]
+    print("Average score for questions: " + avgScore)
+    # answers = all answer posts owned by the user
+    answers = db.posts.find( $and:[ {"OwnerUserId": user},{"PostTypeId": "2"} ] )
+    # count number of answers owned
+    countAggr = answers.aggregate( { $count: "acount" } )
+    count = countAggr["acount"]
+    print("Number of answers owned: " + count)
+    # find average score for answers
+    scoreAggr = answers.aggregate( { average: { $avg: "$score" } } )
+    avgScore = scoreAggr["average"]
+    print("Average score for answers: " + avgScore)
+    # count number of votes where userid = user
+    votes = db.votes.find( {"UserId": user} )
+    countAggr = votes.aggregate( { $count: "vcount" } )
+    count = countAggr["vcount"]
+    print("Number of votes: " + count)
 
 #search for current largest post id and increment by 1
 def newPostId():
-    pass
+	#returns document: {"Id": max}
+    maxDoc = db.posts.aggregate( Id: {$max : "$Id"} )
+    maxId = max_doc["Id"]
+    return maxId+1
+
+#search for current largest vote id and increment by 1
+def newVoteId():
+	#returns document: {"Id": max}
+    maxDoc = db.votes.aggregate( Id: {$max : "$Id"} )
+    maxId = max_doc["Id"]
+    return maxId+1
 
 def postQuestion(user):
     title = input("Please enter your question title: ")
@@ -109,10 +142,10 @@ def answerQuestion(user, questionId):
     
 def listAnswers(user, questionId):
     #return the specific question document
-    question = db.posts.find({"Id": questionId})
+    question = db.posts.find( {"Id": questionId} )
     #find the accepted answer for that question
     accId = question["AcceptedAnswerId"]
-    accAnswer = db.posts.find({"Id": accId})
+    accAnswer = db.posts.find( {"Id": accId} )
     #print the accepted answer
     text = accAnswer["Body"]
     date = accAnswer["CreationDate"]
@@ -121,7 +154,7 @@ def listAnswers(user, questionId):
     print("Answer "+ accId + "* Creation Date: " + date)
     print("Answer "+ accId + "* Score: " + score)
     #print the rest of the answers
-    answers = db.posts.find({"ParentId": questionId})
+    answers = db.posts.find( {"ParentId": questionId} )
     for answer in answers:
         aid = answer["Id"]
         if aid == accId: #skip printing the accepted answer
