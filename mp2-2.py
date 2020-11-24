@@ -53,6 +53,25 @@ def createCollections(db):
     # 	file_data = json.load(file)
     # votes.insert_one(file_data['votes'])
 
+	colList = db.list_collection_names()
+	if "Tags" in colList:
+		print("Tags collection created successfully.\n")
+
+	createTerms(db)
+
+def createTerms(db):
+	posts = db.posts
+	for post in posts:
+		body = post["Body"].split()
+		title = post["Title"].split()
+		for word in body:
+			if len(word) >= 3:
+				terms.insert(0, word) # add to array
+				#do indexing here as you add to array
+		for word in title:
+			if len(word) >= 3:
+				terms.insert(0, word) # add to array
+				#do indexing here as you add to array
 
 def main():
     # port = input("Please enter the port you'd like to run the database on: ")
@@ -62,4 +81,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+	main()
