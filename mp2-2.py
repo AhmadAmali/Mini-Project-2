@@ -6,9 +6,6 @@ import pymongo
 import json
 import time
 
-# removeNonletter = re.compile('[^a-zA-Z ]')
-# remmoveHtml = re.compile('<.*?>')
-# smallWords = re.compile(r'\W*\b\w{1,2}\b')
 
 def createCollections(db):
     # check if collections exist and drop if they do
@@ -57,65 +54,36 @@ def createCollections(db):
 
 
 def createTerms(db):
-    # start = time.time()
-    # removeNonletter = re.compile('[^a-zA-Z ]')
-    # remmoveHtml = re.compile('<.*?>')
-    # smallWords = re.compile(r'\W*\b\w{1,2}\b')
-    #
-    # for doc in db.Posts.find().sort([("$natural", 1)]):
-    #     raw_terms = ''
-    #     try:
-    #         raw_terms = doc['Title']
-    #     except:
-    #         raw_terms = doc['Body']
-    #     finally:
-    #         # terms = parseTerms(raw_terms)
-    #         try:
-    #             print(doc['Id'])
-    #             db.Posts.update({"Id": doc['Id']}, {"$set": {"Terms": list(dict.fromkeys((removeNonletter.sub('', smallWords.sub('', re.sub(remmoveHtml, '', doc.lower())))).split()))}})
-    #         except:
-    #             pass
-    # end = time.time()
-    # print("TIME: ", end - start)
-
     start = time.time()
     removeNonletter = re.compile('[^a-zA-Z ]')
     remmoveHtml = re.compile('<.*?>')
     smallWords = re.compile(r'\W*\b\w{1,2}\b')
 
-    for doc in db.Posts.find().sort([("$natural", 1)]):        # postID = doc['Id']
-        # print(postID)
+    for doc in db.Posts.find().sort([("$natural", 1)]):
         raw_terms = ''
         try:
             raw_terms = doc['Title']
-        except:
+        except KeyError:
             # print("no title")
             pass
         try:
-            raw_terms = raw_terms + doc['Body']
-        except:
+            raw_terms = raw_terms + ' ' + doc['Body']
+        except KeyError:
             # print("no body")
             pass
         try:
+            # print(raw_terms)
             print(doc['Id'])
-            db.Posts.update({"Id": doc['Id']}, {"$set": {"Terms": list(dict.fromkeys((removeNonletter.sub('', smallWords.sub('', re.sub(remmoveHtml, '', doc.lower())))).split()))}})
+            db.Posts.update({"Id": doc['Id']}, {"$set": {"Terms": list(dict.fromkeys((removeNonletter.sub('', smallWords.sub('', re.sub(remmoveHtml, '', raw_terms.lower())))).split()))}})
         except:
             pass
     end = time.time()
     print("TIME: ", end - start)
 
-# def parseTerms(doc):
+# def parseTerms(doc):  // not required delete later
     # removeNonletter = re.compile('[^a-zA-Z ]')
     # remmoveHtml = re.compile('<.*?>')
     # smallWords = re.compile(r'\W*\b\w{1,2}\b')
-
-    # terms = doc.lower()
-    # terms = re.sub(remmoveHtml, '', doc.lower())
-    # terms = smallWords.sub('', re.sub(remmoveHtml, '', doc.lower()))
-    # terms = (removeNonletter.sub('', smallWords.sub('', re.sub(remmoveHtml, '', doc.lower())))).split()
-    # terms = terms.split()
-    # return list(
-    #     dict.fromkeys((removeNonletter.sub('', smallWords.sub('', re.sub(remmoveHtml, '', doc.lower())))).split()))
 
     # terms = doc.lower()
     # terms = re.sub(remmoveHtml, '', terms)
