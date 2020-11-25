@@ -3,6 +3,8 @@
 import pymongo
 import datetime
 from pprint import pprint
+import random
+import string
 
 def mainMenu(db):
     user = input("Enter your user id now or type 'a' to continue anonymously: ")
@@ -91,27 +93,10 @@ def displayReport(user, db):
 
 # search for current largest post id and increment by 1
 def newPostId(db):
-    # returns document: {"Id": max}
-    posts = db["posts"]
-    maxDoc = db.posts.find().sort("Id", -1).limit(1)
-    maxVal = 0
-    for x in maxDoc:
-        maxVal = x['Id']
-    maxVal = int(maxVal) + 1
-    return str(maxVal)
-
-
-# search for current largest vote id and increment by 1
-def newVoteId(db):
-    # returns document: {"Id": max}
-    votes = db["votes"]
-    maxObject = votes.find().sort("Id", -1).limit(1)
-    maxID = 0
-    for x in maxObject:
-        maxID = x['Id']
-    maxID = int(maxID) + 1
-    return str(maxID)
-
+    newId = ''.join(random.choice(string.digits) for i in range(8)) #method for generating alphanumeric strings used from this source, all credit goes to the creator: https://pythonexamples.org/python-generate-random-string-of-specific-length/
+    newId = 'p' + newId
+    return str(newId)
+ 
 
 # returns the current day in the same format as the date in the provided json files
 def getCurrentDay():
@@ -126,9 +111,11 @@ def postQuestion(user, db):
     body = input("Please enter your question body: ")
     Tags = input("Please enter the tags associated with the post, if multiple, seperate with comma: ")
     Tags = "".join(Tags.split())
-    Tags = Tags.split(
-        ",")  # returns a list with the seperated tags as such, if the input was: "<question>, <test>" Output would be ['<question>', '<test>']
-    posts = db["posts"]
+    Tags = Tags.split(",")  # returns a list with the seperated tags as such, if the input was: "<question>, <test>" Output would be ['<question>', '<test>']
+    tagStr = ''
+    for tag in Tags:
+        tagStr += '<' + tag + '>'
+    posts = db["Posts"]
     newQuestion =       {"Id": newPostId(db),
                          "PostTypeId": "1",
                          "CreationDate": getCurrentDay(),
@@ -138,18 +125,21 @@ def postQuestion(user, db):
                          "OwnerUserId": "11",
                          "LastActivityDate": getCurrentDay(),
                          "Title": title,
-                         "Tags": Tags,
+                         "Tags": tagStr,
                          "AnswerCount": 0,
                          "CommentCount": 0,
                          "FavoriteCount": 0,
                          "ContentLicense": "CC BY-SA 2.5"
                          }
-    Posts.insert_one(newQuestion)
+    posts.insert_one(newQuestion)
     print("New question added successfully")
     mainMenu(db)
 
 
-def searchQuestion(db):
+def searchQuestion(user,db):
+    questionID = input("enter the question ID you'd like to interact with: ")
+    specificMenu(user, questionID, db)
+    
     kw_check = True
     keywords = ''
     while kw_check:
@@ -197,7 +187,7 @@ def searchQuestion(db):
 def answerQuestion(user, questionId, db):
     text = input("Enter the text for your answer: ")
     posts = db["posts"]
-    newAnswer = 	{"Id": newPostId(),
+    newAnswer = 	{"Id": newPostId(db),
                     "PostTypeId": "2",
                     "ParentId": questionId,
                     "CreationDate": getCurrentDay(),
@@ -213,8 +203,8 @@ def answerQuestion(user, questionId, db):
 
 
 def listAnswers(user, questionId, db):
-	posts = db["posts"]
-	votes = db["votes"]
+	posts = db["Posts"]
+	votes = db["Votes"]
 	#return the specific question document
 	question = posts.find_one( {"Id": questionId} )
 	#find the accepted answer for that question
@@ -266,7 +256,7 @@ def listAnswers(user, questionId, db):
 def addVote(user, questionId, db):
     votes = db["Votes"]
     if user.lower() == "a":
-        newVote = {"Id": newVoteId(db),
+        newVote = {"Id": newPostId(db),
                    "PostId": questionId,
                    "VoteTypeId": "2",
                    "CreationDate": getCurrentDay()
@@ -289,7 +279,7 @@ def addVote(user, questionId, db):
             mainMenu(db)
         else:
             continue
-    newVote = {"Id": newVoteId(db),
+    newVote = {"Id": newPostId(db),
                "PostId": postId,
                "VoteTypeId": "2",
                "UserId": user,
@@ -311,8 +301,8 @@ def main():
     # port = input("Please enter the port you'd like to run the database on: ")
     client = pymongo.MongoClient("localhost", 27017)
     db = client['291db']
-    # mainMenu(db)
-    searchQuestion(db)
+    mainMenu(db)
+    #searchQuestion(user,db)
 
 
 if __name__ == "__main__":
