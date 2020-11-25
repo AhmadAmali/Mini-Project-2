@@ -328,7 +328,7 @@ def addVote(user, questionId, db):
         else:
             continue
     newVote = {"Id": newPostId(db),
-               "PostId": postId,
+               "PostId": questionId,
                "VoteTypeId": "2",
                "UserId": user,
                "CreationDate": getCurrentDay()
