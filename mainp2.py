@@ -61,34 +61,51 @@ def specificMenu(user, questionId, db):
 # (2) the number of answers owned and the average score for those answers, and
 # (3) the number of votes registered for the user
 def displayReport(user, db):
-    posts = db["posts"]
-    votes = db["votes"]
-    print("User report for " + user + "...\n")
+	posts = db["Posts"]
+	votes = db["Votes"]
+	print("User report for " + user + "...\n")
     # questions = all question posts owned by the user
-    # questions = posts.row.find({},"$and":[{"OwnerUserId": user},{"PostTypeId": "1"}])
+	questions = posts.find({"OwnerUserId": user})
     # count number of questions owned
-    countAggr = questions.aggregate({"$count": "qcount"})
-    count = countAggr["qcount"]
-    print("Number of questions owned: " + count)
+	count = 0
+	for ques in questions:
+		if ques["PostTypeId"] == "1":
+			count += 1
+	print("Number of questions owned: " + str(count))
     # find average score for questions
-    scoreAggr = questions.aggregate({average: {"$avg": "$score"}})
-    avgScore = scoreAggr["average"]
-    print("Average score for questions: " + avgScore)
+	questions = posts.find({"OwnerUserId": user})
+	scoreSum = 0
+	for ques in questions:
+		if ques["PostTypeId"] == "1":
+	 		scoreSum += ques["Score"]
+	avg = 0
+	if count != 0:
+		avg = scoreSum/count
+	print("Average score for questions: " + str(avg))
     # answers = all answer posts owned by the user
-    # answers = posts.row.find("$and":[{"OwnerUserId": user},{"PostTypeId": "2"}])
+	answers = posts.find( {"OwnerUserId": user} )
     # count number of answers owned
-    countAggr = answers.aggregate({"$count": "acount"})
-    count = countAggr["acount"]
-    print("Number of answers owned: " + count)
+	count = 0
+	for ans in answers:
+		if ans["PostTypeId"] == "2":
+			count += 1
+	print("Number of answers owned: " + str(count))
     # find average score for answers
-    scoreAggr = answers.aggregate({average: {"$avg": "$score"}})
-    avgScore = scoreAggr["average"]
-    print("Average score for answers: " + avgScore)
+	answers = posts.find( {"OwnerUserId": user} )
+	scoreSum = 0
+	for ans in answers:
+		if ans["PostTypeId"] == "2":
+	 		scoreSum += ans["Score"]
+	avg = 0
+	if count != 0:
+		avg = scoreSum/count
+	print("Average score for answers: " + str(avg))
     # count number of votes where userid = user
-    votedoc = votes.row.find({"UserId": user})
-    countAggr = votedoc.aggregate({"$count": "vcount"})
-    count = countAggr["vcount"]
-    print("Number of votes: " + count)
+	vs = votes.find( {"UserId": user} )
+	count = 0
+	for v in vs:
+		count += 1
+	print("Number of votes: " + str(count))
 
 
 # search for current largest post id and increment by 1
