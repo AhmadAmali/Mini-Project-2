@@ -203,7 +203,7 @@ def searchQuestion(user,db):
 
 def answerQuestion(user, questionId, db):
     text = input("Enter the text for your answer: ")
-    posts = db["posts"]
+    posts = db["Posts"]
     newAnswer = 	{"Id": newPostId(db),
                     "PostTypeId": "2",
                     "ParentId": questionId,
