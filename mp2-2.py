@@ -4,8 +4,11 @@ from functools import partial
 
 import pymongo
 import json
-import ijson
+import time
 
+# removeNonletter = re.compile('[^a-zA-Z ]')
+# remmoveHtml = re.compile('<.*?>')
+# smallWords = re.compile(r'\W*\b\w{1,2}\b')
 
 def createCollections(db):
     # check if collections exist and drop if they do
@@ -50,13 +53,38 @@ def createCollections(db):
             print("Posts collection created successfully.\n")
         if "votes" in colList:
             print("Votes collection created successfully.\n")
-        # createTerms(db)
+        createTerms(db)
 
 
 def createTerms(db):
-    for doc in db.Posts.find():
-        postID = doc['Id']
-        print(postID)
+    # start = time.time()
+    # removeNonletter = re.compile('[^a-zA-Z ]')
+    # remmoveHtml = re.compile('<.*?>')
+    # smallWords = re.compile(r'\W*\b\w{1,2}\b')
+    #
+    # for doc in db.Posts.find().sort([("$natural", 1)]):
+    #     raw_terms = ''
+    #     try:
+    #         raw_terms = doc['Title']
+    #     except:
+    #         raw_terms = doc['Body']
+    #     finally:
+    #         # terms = parseTerms(raw_terms)
+    #         try:
+    #             print(doc['Id'])
+    #             db.Posts.update({"Id": doc['Id']}, {"$set": {"Terms": list(dict.fromkeys((removeNonletter.sub('', smallWords.sub('', re.sub(remmoveHtml, '', doc.lower())))).split()))}})
+    #         except:
+    #             pass
+    # end = time.time()
+    # print("TIME: ", end - start)
+
+    start = time.time()
+    removeNonletter = re.compile('[^a-zA-Z ]')
+    remmoveHtml = re.compile('<.*?>')
+    smallWords = re.compile(r'\W*\b\w{1,2}\b')
+
+    for doc in db.Posts.find().sort([("$natural", 1)]):        # postID = doc['Id']
+        # print(postID)
         raw_terms = ''
         try:
             raw_terms = doc['Title']
@@ -68,32 +96,43 @@ def createTerms(db):
         except:
             # print("no body")
             pass
-        terms = parseTerms(raw_terms)
-        print(terms)
-        db.Posts.update({"Id": postID}, {"$set": {"Terms": terms}})
+        try:
+            print(doc['Id'])
+            db.Posts.update({"Id": doc['Id']}, {"$set": {"Terms": list(dict.fromkeys((removeNonletter.sub('', smallWords.sub('', re.sub(remmoveHtml, '', doc.lower())))).split()))}})
+        except:
+            pass
+    end = time.time()
+    print("TIME: ", end - start)
 
+# def parseTerms(doc):
+    # removeNonletter = re.compile('[^a-zA-Z ]')
+    # remmoveHtml = re.compile('<.*?>')
+    # smallWords = re.compile(r'\W*\b\w{1,2}\b')
 
-def parseTerms(doc):
-    removeNonletter = re.compile('[^a-zA-Z ]')
-    remmoveHtml = re.compile('<.*?>')
-    smallWords = re.compile(r'\W*\b\w{1,2}\b')
+    # terms = doc.lower()
+    # terms = re.sub(remmoveHtml, '', doc.lower())
+    # terms = smallWords.sub('', re.sub(remmoveHtml, '', doc.lower()))
+    # terms = (removeNonletter.sub('', smallWords.sub('', re.sub(remmoveHtml, '', doc.lower())))).split()
+    # terms = terms.split()
+    # return list(
+    #     dict.fromkeys((removeNonletter.sub('', smallWords.sub('', re.sub(remmoveHtml, '', doc.lower())))).split()))
 
-    terms = doc.lower()
-    terms = re.sub(remmoveHtml, '', terms)
-    terms = smallWords.sub('', terms)
-    terms = removeNonletter.sub('', terms)
-    terms = terms.split()
-    terms = list(dict.fromkeys(terms))
+    # terms = doc.lower()
+    # terms = re.sub(remmoveHtml, '', terms)
+    # terms = smallWords.sub('', terms)
+    # terms = removeNonletter.sub('', terms)
+    # terms = terms.split()
+    # terms = list(dict.fromkeys(terms))
 
-    return terms
+    # return terms
 
 
 def main():
     # port = input("Please enter the port you'd like to run the database on: ")
     client = pymongo.MongoClient("localhost", 27018)
     db = client['291db']
-    # createTerms(db)
-    createCollections(db)
+    createTerms(db)
+    # createCollections(db)
 
 
 if __name__ == "__main__":
