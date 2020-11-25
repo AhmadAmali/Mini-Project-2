@@ -7,12 +7,14 @@ from pprint import pprint
 import random
 import string
 
+
 def login(db):
-	user = input("Enter your user id now or type 'a' to continue anonymously: ")
-	user = user.lower()
-	if user.lower() != 'a':
-		displayReport(user, db)
-	mainMenu(user, db)
+    user = input("Enter your user id now or type 'a' to continue anonymously: ")
+    user = user.lower()
+    if user.lower() != 'a':
+        displayReport(user, db)
+    mainMenu(user, db)
+
 
 def mainMenu(user, db):
     menuCondition = True
@@ -26,15 +28,15 @@ def mainMenu(user, db):
             postQuestion(user, db)
         elif task.lower() == 's':  # search for a post
             menuCondition = False
-            searchQuestion(db)
+            searchQuestion(user, db)
         elif task.lower() == 'e':  # exit program
             quit()
         else:
             task = input("You inputted an incorrect choice, please try again: ")
             continue
 
-def specificMenu(user, questionId, db):
 
+def specificMenu(user, questionId, db):
     menuCondition = True
     task = input("""Select the task you would like to perform. You can also type E to exit\n 
     (A): Post an Answer\n 
@@ -66,59 +68,60 @@ def specificMenu(user, questionId, db):
 # (2) the number of answers owned and the average score for those answers, and
 # (3) the number of votes registered for the user
 def displayReport(user, db):
-	posts = db["Posts"]
-	votes = db["Votes"]
-	print("User report for " + user + "...\n")
+    posts = db["Posts"]
+    votes = db["Votes"]
+    print("User report for " + user + "...\n")
     # questions = all question posts owned by the user
-	questions = posts.find({"OwnerUserId": user})
+    questions = posts.find({"OwnerUserId": user})
     # count number of questions owned
-	count = 0
-	for ques in questions:
-		if ques["PostTypeId"] == "1":
-			count += 1
-	print("Number of questions owned: " + str(count))
+    count = 0
+    for ques in questions:
+        if ques["PostTypeId"] == "1":
+            count += 1
+    print("Number of questions owned: " + str(count))
     # find average score for questions
-	questions = posts.find({"OwnerUserId": user})
-	scoreSum = 0
-	for ques in questions:
-		if ques["PostTypeId"] == "1":
-	 		scoreSum += ques["Score"]
-	avg = 0
-	if count != 0:
-		avg = scoreSum/count
-	print("Average score for questions: " + str(avg))
+    questions = posts.find({"OwnerUserId": user})
+    scoreSum = 0
+    for ques in questions:
+        if ques["PostTypeId"] == "1":
+            scoreSum += ques["Score"]
+    avg = 0
+    if count != 0:
+        avg = scoreSum / count
+    print("Average score for questions: " + str(avg))
     # answers = all answer posts owned by the user
-	answers = posts.find( {"OwnerUserId": user} )
+    answers = posts.find({"OwnerUserId": user})
     # count number of answers owned
-	count = 0
-	for ans in answers:
-		if ans["PostTypeId"] == "2":
-			count += 1
-	print("Number of answers owned: " + str(count))
+    count = 0
+    for ans in answers:
+        if ans["PostTypeId"] == "2":
+            count += 1
+    print("Number of answers owned: " + str(count))
     # find average score for answers
-	answers = posts.find( {"OwnerUserId": user} )
-	scoreSum = 0
-	for ans in answers:
-		if ans["PostTypeId"] == "2":
-	 		scoreSum += ans["Score"]
-	avg = 0
-	if count != 0:
-		avg = scoreSum/count
-	print("Average score for answers: " + str(avg))
+    answers = posts.find({"OwnerUserId": user})
+    scoreSum = 0
+    for ans in answers:
+        if ans["PostTypeId"] == "2":
+            scoreSum += ans["Score"]
+    avg = 0
+    if count != 0:
+        avg = scoreSum / count
+    print("Average score for answers: " + str(avg))
     # count number of votes where userid = user
-	vs = votes.find( {"UserId": user} )
-	count = 0
-	for v in vs:
-		count += 1
-	print("Number of votes: " + str(count))
+    vs = votes.find({"UserId": user})
+    count = 0
+    for v in vs:
+        count += 1
+    print("Number of votes: " + str(count))
 
 
 # search for current largest post id and increment by 1
 def newPostId(db):
-    newId = ''.join(random.choice(string.digits) for i in range(8)) #method for generating alphanumeric strings used from this source, all credit goes to the creator: https://pythonexamples.org/python-generate-random-string-of-specific-length/
+    newId = ''.join(random.choice(string.digits) for i in range(
+        8))  # method for generating alphanumeric strings used from this source, all credit goes to the creator: https://pythonexamples.org/python-generate-random-string-of-specific-length/
     newId = 'p' + newId
     return str(newId)
- 
+
 
 # returns the current day in the same format as the date in the provided json files
 def getCurrentDay():
@@ -133,36 +136,35 @@ def postQuestion(user, db):
     body = input("Please enter your question body: ")
     Tags = input("Please enter the tags associated with the post, if multiple, seperate with comma: ")
     Tags = "".join(Tags.split())
-    Tags = Tags.split(",") # returns a list with the seperated tags as such, if the input was: "<question>, <test>" Output would be ['<question>', '<test>']
+    Tags = Tags.split(
+        ",")  # returns a list with the seperated tags as such, if the input was: "<question>, <test>" Output would be ['<question>', '<test>']
     posts = db["posts"]
     newid = newPostId(db)
-    newQuestion =       {"Id": newid,
-                         "PostTypeId": "1",
-                         "CreationDate": getCurrentDay(),
-                         "Score": 0,
-                         "ViewCount": 0,
-                         "Body": body,
-                         "LastActivityDate": getCurrentDay(),
-                         "Title": title,
-                         "Tags": Tags,
-                         "AnswerCount": 0,
-                         "CommentCount": 0,
-                         "FavoriteCount": 0,
-                         "ContentLicense": "CC BY-SA 2.5"
-                         }
+    newQuestion = {"Id": newid,
+                   "PostTypeId": "1",
+                   "CreationDate": getCurrentDay(),
+                   "Score": 0,
+                   "ViewCount": 0,
+                   "Body": body,
+                   "LastActivityDate": getCurrentDay(),
+                   "Title": title,
+                   "Tags": Tags,
+                   "AnswerCount": 0,
+                   "CommentCount": 0,
+                   "FavoriteCount": 0,
+                   "ContentLicense": "CC BY-SA 2.5"
+                   }
     posts.insert_one(newQuestion)
     if user != "a":
-    	oldValue = { "Id" : newid }
-    	newValue = {"$set":{ "OwnerUserId" : user }}
-    	posts.update_one(oldValue,newValue)
+        oldValue = {"Id": newid}
+        newValue = {"$set": {"OwnerUserId": user}}
+        posts.update_one(oldValue, newValue)
     print("New question added successfully")
     mainMenu(user, db)
 
 
-def searchQuestion(user,db):
-    questionID = input("enter the question ID you'd like to interact with: ")
-    specificMenu(user, questionID, db)
-    
+def searchQuestion(user, db):
+
     kw_check = True
     keywords = ''
     while kw_check:
@@ -181,7 +183,8 @@ def searchQuestion(user,db):
 
     all_data = []
     # result parsing
-    print(posts.count(), "results found")
+    p_count = posts.count()
+    print(p_count, "results found")
     for post in posts:
         data = []
         try:
@@ -210,6 +213,29 @@ def searchQuestion(user,db):
     end = time.time()
     print("Search in", end - start, "seconds")
 
+    if p_count == 0:
+        mainMenu(user, db)
+
+    valid_input = True
+    while valid_input:
+        questionID = input("Enter post ID to select or '0' to return to main menu: ")
+        if questionID == '0':
+            valid_input = False
+            mainMenu(user, db)
+        else:
+            if checkExists(questionID, db) is not False:
+                valid_input = False
+                for doc in db.Posts.find({"Id": questionID}):
+                    pprint(doc)
+                specificMenu(user, questionID, db)
+
+
+def checkExists(postid, db):
+    if db.Posts.find({"Id": postid}).count() > 0:
+        return True
+    else:
+        print("Invalid Input. Please Try again")
+        return False
 
 def print_search_table(data):  # handle printing the table here
     table = PrettyTable(['ID', 'Title', 'Creation Date', 'Score', 'Answers'])
@@ -222,81 +248,81 @@ def answerQuestion(user, questionId, db):
     text = input("Enter the text for your answer: ")
     posts = db["Posts"]
     newid = newPostId(db)
-    newAnswer = 	{"Id": newid,
-                    "PostTypeId": "2",
-                    "ParentId": questionId,
-                    "CreationDate": getCurrentDay(),
-                    "Score": 0,
-                    "Body": text,
-                    "LastActivityDate": getCurrentDay(),
-                    "CommentCount": 0,
-                    "ContentLicense": "CC BY-SA 2.5"}
+    newAnswer = {"Id": newid,
+                 "PostTypeId": "2",
+                 "ParentId": questionId,
+                 "CreationDate": getCurrentDay(),
+                 "Score": 0,
+                 "Body": text,
+                 "LastActivityDate": getCurrentDay(),
+                 "CommentCount": 0,
+                 "ContentLicense": "CC BY-SA 2.5"}
     posts.insert_one(newAnswer)
     if user != "a":
-    	oldValue = { "Id" : newid }
-    	newValue = {"$set":{ "OwnerUserId" : user }}
-    	posts.update_one(oldValue,newValue)
+        oldValue = {"Id": newid}
+        newValue = {"$set": {"OwnerUserId": user}}
+        posts.update_one(oldValue, newValue)
     print("New answer added successfully")
     mainMenu(user, db)
 
 
 def listAnswers(user, questionId, db):
-	posts = db["Posts"]
-	votes = db["Votes"]
-	#return the specific question document
-	question = posts.find_one( {"Id": questionId} )
-	#find the accepted answer for that question if there is one
-	if hasattr(question, "AcceptedAnswerId"):
-		accId = question["AcceptedAnswerId"]
-		accAnswer = posts.find_one( {"Id": accId} )
-		#print the accepted answer
-		text = accAnswer["Body"]
-		date = accAnswer["CreationDate"]
-		score = accAnswer["Score"]
-		print("Answer "+ accId + "* Body: " + '%.80s' %  text) #only prints up to 80 characters
-		print("Answer "+ accId + "* Creation Date: " + date)
-		print("Answer "+ accId + "* Score: " + str(score))
-	#print the rest of the answers
-	answers = posts.find( {"ParentId": questionId} )
-	# if no answers in the list
-	if not answers:
-		print("No Answers for this Question\n")
-	for answer in answers:
-		aid = answer["Id"]
-		if hasattr(question, "AcceptedAnswerId"):
-			if aid == accId: #skip printing the accepted answer
-				continue
-		text = answer["Body"]
-		date = answer["CreationDate"]
-		score = answer["Score"]
-		print("Answer "+aid+" Body: " + '%.80s' % text) #only prints up to 80 characters
-		print("Answer "+aid+" Creation Date: " + date)
-		print("Answer "+aid+" Score: " + str(score))
-	#allow user to select answer to print full document
-	if not answers:
-		mainMenu(user, db)
-	else:
-		aidSelect = input("Select an answer by typing its id as shown above: ")
-		result = posts.find_one({"Id": aidSelect})
-		pprint(result)
-		#allow user to vote on the answer or return to main menu
-		task = input("""Select an action: 
+    posts = db["Posts"]
+    votes = db["Votes"]
+    # return the specific question document
+    question = posts.find_one({"Id": questionId})
+    # find the accepted answer for that question if there is one
+    if hasattr(question, "AcceptedAnswerId"):
+        accId = question["AcceptedAnswerId"]
+        accAnswer = posts.find_one({"Id": accId})
+        # print the accepted answer
+        text = accAnswer["Body"]
+        date = accAnswer["CreationDate"]
+        score = accAnswer["Score"]
+        print("Answer " + accId + "* Body: " + '%.80s' % text)  # only prints up to 80 characters
+        print("Answer " + accId + "* Creation Date: " + date)
+        print("Answer " + accId + "* Score: " + str(score))
+    # print the rest of the answers
+    answers = posts.find({"ParentId": questionId})
+    # if no answers in the list
+    if not answers:
+        print("No Answers for this Question\n")
+    for answer in answers:
+        aid = answer["Id"]
+        if hasattr(question, "AcceptedAnswerId"):
+            if aid == accId:  # skip printing the accepted answer
+                continue
+        text = answer["Body"]
+        date = answer["CreationDate"]
+        score = answer["Score"]
+        print("Answer " + aid + " Body: " + '%.80s' % text)  # only prints up to 80 characters
+        print("Answer " + aid + " Creation Date: " + date)
+        print("Answer " + aid + " Score: " + str(score))
+    # allow user to select answer to print full document
+    if not answers:
+        mainMenu(user, db)
+    else:
+        aidSelect = input("Select an answer by typing its id as shown above: ")
+        result = posts.find_one({"Id": aidSelect})
+        pprint(result)
+        # allow user to vote on the answer or return to main menu
+        task = input("""Select an action: 
 			(V): Vote on Answer\n 
 			(R): Return to Main Menu\n
 			(E): Exit Program\n""")
-		menuCondition = True
-		while menuCondition:
-			if task.lower() == 'v':  # add an vote
-				menuCondition = False
-				addVote(user, aidSelect, db)
-			elif task.lower() == 'r':  # return to main menu
-				menuCondition = False
-				mainMenu(user, db)
-			elif task.lower() == 'e':  # exit program
-				quit()
-			else:
-				task = input("You inputted an incorrect choice, please try again: ")
-				continue
+        menuCondition = True
+        while menuCondition:
+            if task.lower() == 'v':  # add an vote
+                menuCondition = False
+                addVote(user, aidSelect, db)
+            elif task.lower() == 'r':  # return to main menu
+                menuCondition = False
+                mainMenu(user, db)
+            elif task.lower() == 'e':  # exit program
+                quit()
+            else:
+                task = input("You inputted an incorrect choice, please try again: ")
+                continue
 
 
 def addVote(user, questionId, db):
@@ -348,7 +374,7 @@ def main():
     client = pymongo.MongoClient("localhost", port)
     db = client['291db']
     login(db)
-    #searchQuestion(user,db)
+    # searchQuestion(user,db)
 
 
 if __name__ == "__main__":
