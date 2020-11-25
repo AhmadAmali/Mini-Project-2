@@ -90,8 +90,9 @@ def displayReport(user, db):
 #search for current largest post id and increment by 1
 def newPostId(db):
     #returns document: {"Id": max}
-    posts = db["posts"]
+    posts = db["Posts"]
     maxDoc = db.posts.find().sort("Id", -1).limit(1)
+    maxVal = 0
     for x in maxDoc:
         maxVal = x['Id']
     maxVal = int(maxVal) + 1
@@ -100,6 +101,7 @@ def newPostId(db):
 #search for current largest vote id and increment by 1
 def newVoteId(db):
 	#returns document: {"Id": max}
+    maxID = 0
     posts = db["Votes"]
     maxObject = db.Votes.find().sort("Id", -1).limit(1)
     for x in maxObject:
@@ -136,7 +138,7 @@ def postQuestion(user, db):
                          "FavoriteCount": 0,
                          "ContentLicense": "CC BY-SA 2.5"
                          }
-    posts.row.insert_one(newQuestion)
+    Posts.insert_one(newQuestion)
     print("New question added successfully")
     mainMenu(db)
     
@@ -147,7 +149,7 @@ def searchQuestion(user,db):
 def answerQuestion(user, questionId, db):
     text = input("Enter the text for your answer: ")
     posts = db["posts"]
-    newAnswer = 	{"Id": newPostId(),
+    newAnswer = 	{"Id": newPostId(db),
                     "PostTypeId": "2",
                     "ParentId": questionId,
                     "CreationDate": getCurrentDay(),
@@ -225,7 +227,6 @@ def addVote(user, questionId,db):
         score = posts.find_one( {"Id": questionId} )
         x = score["Score"]
         newScore = x + 1
-        print(newScore)
         oldValue = { "Id" : questionId }
         newValue = {"$set":{ "Score" : newScore }}
         db.Posts.update_one(oldValue,newValue)
@@ -246,6 +247,13 @@ def addVote(user, questionId,db):
                "CreationDate": getCurrentDay()
                }
     votes.row.insert_one(newVote)
+    posts = db["Posts"]
+    score = posts.find_one( {"Id": questionId} )
+    x = score["Score"]
+    newScore = x + 1
+    oldValue = { "Id" : questionId }
+    newValue = {"$set":{ "Score" : newScore }}
+    db.Posts.update_one(oldValue,newValue)    
     print("vote added succesfully")
     mainMenu(db)
 
