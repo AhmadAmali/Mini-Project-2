@@ -34,7 +34,6 @@ def mainMenu(user, db):
             continue
 
 def specificMenu(user, questionId, db):
-
     menuCondition = True
     task = input("""Select the task you would like to perform. You can also type E to exit\n 
     (A): Post an Answer\n 
@@ -133,8 +132,11 @@ def postQuestion(user, db):
     body = input("Please enter your question body: ")
     Tags = input("Please enter the tags associated with the post, if multiple, seperate with comma: ")
     Tags = "".join(Tags.split())
-    Tags = Tags.split(",") # returns a list with the seperated tags as such, if the input was: "<question>, <test>" Output would be ['<question>', '<test>']
-    posts = db["posts"]
+    Tags = Tags.split(",")  # returns a list with the seperated tags as such, if the input was: "<question>, <test>" Output would be ['<question>', '<test>']
+    tagStr = ''
+    for tag in Tags:
+        tagStr += '<' + tag + '>'
+    posts = db["Posts"]
     newid = newPostId(db)
     newQuestion =       {"Id": newid,
                          "PostTypeId": "1",
@@ -144,7 +146,7 @@ def postQuestion(user, db):
                          "Body": body,
                          "LastActivityDate": getCurrentDay(),
                          "Title": title,
-                         "Tags": Tags,
+                         "Tags": tagStr,
                          "AnswerCount": 0,
                          "CommentCount": 0,
                          "FavoriteCount": 0,
