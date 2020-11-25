@@ -28,7 +28,6 @@ def mainMenu(db):
             continue
 
 def specificMenu(user, questionId, db):
-
     menuCondition = True
     task = input("""Select the task you would like to perform. You can also type E to exit\n 
     (A): Post an Answer\n 
@@ -64,21 +63,21 @@ def displayReport(user, db):
     # questions = all question posts owned by the user
     #questions = posts.row.find({},"$and":[{"OwnerUserId": user},{"PostTypeId": "1"}])
     # count number of questions owned
-    countAggr = questions.aggregate({ "$count": "qcount" })
+    countAggr = questions.aggregate({"$count": "qcount"})
     count = countAggr["qcount"]
     print("Number of questions owned: " + count)
     # find average score for questions
-    scoreAggr = questions.aggregate({average:{ "$avg": "$score" }})
+    scoreAggr = questions.aggregate({average: {"$avg": "$score"}})
     avgScore = scoreAggr["average"]
     print("Average score for questions: " + avgScore)
     # answers = all answer posts owned by the user
     #answers = posts.row.find("$and":[{"OwnerUserId": user},{"PostTypeId": "2"}])
     # count number of answers owned
-    countAggr = answers.aggregate({ "$count": "acount" })
+    countAggr = answers.aggregate({"$count": "acount"})
     count = countAggr["acount"]
     print("Number of answers owned: " + count)
     # find average score for answers
-    scoreAggr = answers.aggregate( { average: { "$avg": "$score" } } )
+    scoreAggr = answers.aggregate({average: {"$avg": "$score"}})
     avgScore = scoreAggr["average"]
     print("Average score for answers: " + avgScore)
     # count number of votes where userid = user
@@ -87,7 +86,8 @@ def displayReport(user, db):
     count = countAggr["vcount"]
     print("Number of votes: " + count)
 
-#search for current largest post id and increment by 1
+
+# search for current largest post id and increment by 1
 def newPostId(db):
     #returns document: {"Id": max}
     posts = db["Posts"]
@@ -116,6 +116,7 @@ def getCurrentDay():
     new_current = current.replace(" ", "T")
     return new_current
 
+
 def postQuestion(user, db):
     title = input("Please enter your question title: ")
     body = input("Please enter your question body: ")
@@ -142,9 +143,47 @@ def postQuestion(user, db):
     print("New question added successfully")
     mainMenu(db)
     
-def searchQuestion(user,db):
-    questionId = input("enter your question ID you'd like to perform actions on: ")
-    specificMenu(user, questionId,db)
+def searchQuestion(db):
+    kw_check = True
+    keywords = ''
+    while kw_check:
+        if not keywords:
+            keywords = input("Please enter keywords separated by a comma (press 0 to return to main menu): ")
+        else:
+            kw_check = False
+    if keywords.lower() == '0':
+        mainMenu(db)
+    keywords = "".join(keywords.split()).split(",")  # user inputted keywords
+
+    print(keywords)
+    # posts = db.Posts.find(
+    #     {"$or": [
+    #         {"Title": {"$in": ['mail']}},
+    #         {"Body": {"$in": []}},
+    #         {"Tags": {"$in": []}}
+    #     ]}
+    # )
+    # for i in posts:
+    #     print(i)
+        # pprint.pprint(post)
+    # posts = db.Posts.find({"Title": {'$regex': '.*'+'mail'+'.*'}})
+    posts = db.Posts.find({"$or": [{"Title": {'$regex': '.*'+'mail'+'.*'}}, {"Body": {'$regex': '.*'+'mail'+'.*'}}, {"Tags": {'$regex': '.*'+'mail'+'.*'}}]})
+    # posts = db.Posts.find({"$and": [{"PostTypeId": "1"}, {"$or": [{"Title": {'$regex': '.*'+'mail'+'.*'}}, {"Body": {'$regex': '.*'+'mail'+'.*'}}, {"Tags": {'$regex': '.*'+'mail'+'.*'}}]}]})
+    # posts = db.Posts.find({"$and": [{"PostTypeId": "1"}, {
+    #     "$or": [{"Title": {"$in":keywords}}, {"Body": {"$in":keywords}},
+    #             {"Tags": {"$in":keywords}}]}]})
+    # posts = db.Posts.find({"$or": [{"Title": {"$in":keywords}}, {"Body": {"$in":keywords}},
+    #             {"Tags": {"$in":keywords}}]})
+    # posts = db.Posts.find({"Title": {"$in": ['mail']}})
+
+    # print(posts)
+    # for i in posts:
+    #     print(i)
+        # postID = i['Id']
+        # print(postID)
+    # for post in db.Posts.find({"PostTypeId": "1"}):
+    #     print(post)
+    # specificMenu(user, questionId) //do question actions implement later
 
 def answerQuestion(user, questionId, db):
     text = input("Enter the text for your answer: ")
@@ -182,19 +221,19 @@ def listAnswers(user, questionId, db):
     answers = posts.row.find( {"ParentId": questionId} )
     for answer in answers:
         aid = answer["Id"]
-        if aid == accId: #skip printing the accepted answer
+        if aid == accId:  # skip printing the accepted answer
             continue
         text = answer["Body"]
         date = answer["CreationDate"]
         score = answer["Score"]
-        print("Answer "+aid+" Body: " + '%.80s' % text) #only prints up to 80 characters
-        print("Answer "+aid+" Creation Date: " + date)
-        print("Answer "+aid+" Score: " + score)
-    #allow user to select answer to print full document
+        print("Answer " + aid + " Body: " + '%.80s' % text)  # only prints up to 80 characters
+        print("Answer " + aid + " Creation Date: " + date)
+        print("Answer " + aid + " Score: " + score)
+    # allow user to select answer to print full document
     aidSelect = input("Select an answer by typing its id as shown above: ")
     result = posts.row.find({"Id": aidSelect})
     print(result)
-    #allow user to vote on the answer or return to main menu
+    # allow user to vote on the answer or return to main menu
     task = input("""Select an action: 
         (V): Vote on Answer\n 
         (R): Return to Main Menu\n
@@ -259,11 +298,12 @@ def addVote(user, questionId,db):
 
 
 def main():
-    port = input("Please enter the port you'd like to run the database on: ")
+    # port = input("Please enter the port you'd like to run the database on: ")
     client = pymongo.MongoClient("localhost", 27017)
     db = client['291db']
-    mainMenu(db)
+    # mainMenu(db)
+    searchQuestion(db)
+
 
 if __name__ == "__main__":
     main()
-

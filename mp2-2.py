@@ -1,4 +1,5 @@
 # mini project 2 Phase 1, CMPUT291
+import re
 from functools import partial
 
 import pymongo
@@ -25,22 +26,22 @@ def createCollections(db):
 
     # read json files and insert them into collections
     with open('Posts.json') as file:
-        data = ijson.items(file, 'posts.row.item')
-        for i in data:
-            print(i)
-            posts.insert_one(json.loads(json.dumps(i)))
+        read_data = file.read()
+        data = json.loads(read_data)
+        posts.insert_many(data['posts']['row'])
+        print("Done Posts")
 
     with open('Tags.json') as file:
-        data = ijson.items(file, 'tags.row.item')
-        for i in data:
-            print(i)
-            tags.insert_one(json.loads(json.dumps(i)))
+        read_data = file.read()
+        data = json.loads(read_data)
+        tags.insert_many(data['tags']['row'])
+        print("Done Tags")
 
     with open('Votes.json') as file:
-        data = ijson.items(file, 'votes.row.item')
-        for i in data:
-            print(i)
-            votes.insert_one(json.loads(json.dumps(i)))
+        read_data = file.read()
+        data = json.loads(read_data)
+        votes.insert_many(data['votes']['row'])
+        print("Done Votes")
 
         colList = db.list_collection_names()
         if "tags" in colList:
@@ -52,25 +53,46 @@ def createCollections(db):
         # createTerms(db)
 
 
-# def createTerms(db):
-#     posts = db.posts
-#     for post in posts:
-#         body = post["Body"].split()
-#         title = post["Title"].split()
-#         for word in body:
-#             if len(word) >= 3:
-#                 terms.insert(0, word)  # add to array
-#             # do indexing here as you add to array
-#         for word in title:
-#             if len(word) >= 3:
-#                 terms.insert(0, word)  # add to array
-#             # do indexing here as you add to array
+def createTerms(db):
+    for doc in db.Posts.find():
+        postID = doc['Id']
+        print(postID)
+        raw_terms = ''
+        try:
+            raw_terms = doc['Title']
+        except:
+            # print("no title")
+            pass
+        try:
+            raw_terms = raw_terms + doc['Body']
+        except:
+            # print("no body")
+            pass
+        terms = parseTerms(raw_terms)
+        print(terms)
+        db.Posts.update({"Id": postID}, {"$set": {"Terms": terms}})
+
+
+def parseTerms(doc):
+    removeNonletter = re.compile('[^a-zA-Z ]')
+    remmoveHtml = re.compile('<.*?>')
+    smallWords = re.compile(r'\W*\b\w{1,2}\b')
+
+    terms = doc.lower()
+    terms = re.sub(remmoveHtml, '', terms)
+    terms = smallWords.sub('', terms)
+    terms = removeNonletter.sub('', terms)
+    terms = terms.split()
+    terms = list(dict.fromkeys(terms))
+
+    return terms
 
 
 def main():
     # port = input("Please enter the port you'd like to run the database on: ")
-    client = pymongo.MongoClient("localhost", 27017)
+    client = pymongo.MongoClient("localhost", 27018)
     db = client['291db']
+    # createTerms(db)
     createCollections(db)
 
 
