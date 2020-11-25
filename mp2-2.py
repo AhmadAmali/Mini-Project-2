@@ -1,4 +1,5 @@
 # mini project 2 Phase 1, CMPUT291
+import re, string
 from functools import partial
 
 import pymongo
@@ -49,29 +50,64 @@ def createCollections(db):
             print("Posts collection created successfully.\n")
         if "votes" in colList:
             print("Votes collection created successfully.\n")
-        # createTerms(db)
+        createTerms(db)
 
 
-# def createTerms(db):
-#     posts = db.posts
-#     for post in posts:
-#         body = post["Body"].split()
-#         title = post["Title"].split()
-#         for word in body:
-#             if len(word) >= 3:
-#                 terms.insert(0, word)  # add to array
-#             # do indexing here as you add to array
-#         for word in title:
-#             if len(word) >= 3:
-#                 terms.insert(0, word)  # add to array
-#             # do indexing here as you add to array
+def createTerms(db):
+    # posts = db.posts.find("")
+    # data = ijson.items(file, 'posts.row.item')
+    # for i in data:
+    #     print(i)
+    remmoveHtml = re.compile('<.*?>')
+    smallWords = re.compile(r'\W*\b\w{1,3}\b')
+    i = 0
+    for doc in db.Posts.find():
+        if i != 50:
+            try:
+                # pass
+                # title = doc['Title']
+                # title = re.sub(remmoveHtml, '', doc['Title'])
+                # title = re.sub(remmoveHtml, '', doc['Title']).strip(string.punctuation)
+                # title = smallWords.sub('', re.sub(remmoveHtml, '', doc['Title']).strip(string.punctuation))
+                title = smallWords.sub('', re.sub(remmoveHtml, '', doc['Title']).strip(string.punctuation)).split()
+                print("TITLE", title)
+            except:
+                # print("no title")
+                pass
+            try:
+                # pass
+                # body = doc['Body']
+                # body = re.sub(remmoveHtml, '', doc['Body'])
+                # body = re.sub(remmoveHtml, '', doc['Body']).strip(string.punctuation)
+                # body = smallWords.sub('', re.sub(remmoveHtml, '', doc['Body']).strip(string.punctuation))
+                body = smallWords.sub('', re.sub(remmoveHtml, '', doc['Body']).strip(string.punctuation)).split()
+                print("BODY", body)
+            except:
+                # print("no body")
+                pass
+            i += 1
+        else:
+            return
+
+    # for post in posts:
+    #     body = post["Body"].split()
+    #     title = post["Title"].split()
+    #     for word in body:
+    #         if len(word) >= 3:
+    #             terms.insert(0, word)  # add to array
+    #         # do indexing here as you add to array
+    #     for word in title:
+    #         if len(word) >= 3:
+    #             terms.insert(0, word)  # add to array
+    # do indexing here as you add to array
 
 
 def main():
     # port = input("Please enter the port you'd like to run the database on: ")
     client = pymongo.MongoClient("localhost", 27017)
     db = client['291db']
-    createCollections(db)
+    createTerms(db)
+    # createCollections(db)
 
 
 if __name__ == "__main__":
