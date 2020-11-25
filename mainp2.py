@@ -1,62 +1,67 @@
 ## mini project 2, CMPUT291
 
 import pymongo
+import datetime
 
 
 def mainMenu(db):
     user = input("Enter your user id now or type 'a' to continue anonymously: ")
     if user.lower() != 'a':
-        displayReport(user)
+        displayReport(user, db)
     menuCondition = True
     task = input("""Select the task you would like to perform. You can also type E to exit\n 
     (P): Post a Question\n 
     (S): Search for Question\n
-    (0): Exit Program\n""")
+    (E): Exit Program\n""")
+
     while menuCondition:
         if task.lower() == 'p':  # add a question
             menuCondition = False
             postQuestion(user, db)
         elif task.lower() == 's':  # search for a post
             menuCondition = False
-            searchQuestion(user)
+            searchQuestion(user, db)
         elif task.lower() == 'e':  # exit program
             quit()
         else:
             task = input("You inputted an incorrect choice, please try again: ")
             continue
 
-
-def specificMenu(user, questionId):
+def specificMenu(user, questionId, db):
     menuCondition = True
     task = input("""Select the task you would like to perform. You can also type E to exit\n 
     (A): Post an Answer\n 
     (L): List Answers for the Post\n
+    (V): Vote on Selected Post\n
     (R): Return to Main Menu\n""")
     while menuCondition:
         if task.lower() == 'a':  # add an answer
             menuCondition = False
-            answerQuestion(user, questionId)
+            answerQuestion(user, questionId, db)
         elif task.lower() == 'l':  # list the answers
             menuCondition = False
-            listAnswers(user, questionId)
+            listAnswers(user, questionId, db)
         elif task.lower() == 'r':  # return to main menu
             menuCondition = False
-            mainMenu(user)
+            mainMenu(db)
+        elif task.lower() == 'v':  # add a vote to the question
+            addVote(user, questionId, db)
         elif task.lower() == 'e':  # exit program
             quit()
         else:
             task = input("You inputted an incorrect choice, please try again: ")
             continue
 
-
-# If a user id is provided, the user will be shown a report that includes
-# (1) the number of questions owned and the average score for those questions,
-# (2) the number of answers owned and the average score for those answers, and
-# (3) the number of votes registered for the user
-def displayReport(user):
+#If a user id is provided, the user will be shown a report that includes 
+#(1) the number of questions owned and the average score for those questions, 
+#(2) the number of answers owned and the average score for those answers, and 
+#(3) the number of votes registered for the user
+def displayReport(user, db):
+    posts = db["posts"]
+    votes = db["votes"]
     print("User report for " + user + "...\n")
     # questions = all question posts owned by the user
-    # questions = db.posts.find({},"$and":[{"OwnerUserId": user},{"PostTypeId": "1"}])
+    questions = posts.row.find({},"$and":[{"OwnerUserId": user},{"PostTypeId": "1"}])
     # count number of questions owned
     countAggr = questions.aggregate({"$count": "qcount"})
     count = countAggr["qcount"]
@@ -66,7 +71,7 @@ def displayReport(user):
     avgScore = scoreAggr["average"]
     print("Average score for questions: " + avgScore)
     # answers = all answer posts owned by the user
-    # answers = db.posts.find("$and":[{"OwnerUserId": user},{"PostTypeId": "2"}])
+    answers = posts.row.find("$and":[{"OwnerUserId": user},{"PostTypeId": "2"}])
     # count number of answers owned
     countAggr = answers.aggregate({"$count": "acount"})
     count = countAggr["acount"]
@@ -76,140 +81,102 @@ def displayReport(user):
     avgScore = scoreAggr["average"]
     print("Average score for answers: " + avgScore)
     # count number of votes where userid = user
-    votes = db.votes.find({"UserId": user})
-    countAggr = votes.aggregate({"$count": "vcount"})
+    votedoc = votes.row.find( {"UserId": user} )
+    countAggr = votedoc.aggregate( { "$count": "vcount" } )
     count = countAggr["vcount"]
     print("Number of votes: " + count)
 
 
 # search for current largest post id and increment by 1
 def newPostId(db):
-    # returns document: {"Id": max}
-    posts = db["Posts"]
-    maxDoc = db.Posts.find().sort("Id", -1).limit(1)
+    #returns document: {"Id": max}
+    posts = db["posts"]
+    maxDoc = db.posts.find().sort("Id", -1).limit(1)
     for x in maxDoc:
         maxVal = x['Id']
     maxVal = int(maxVal) + 1
     return maxVal
 
-
-# search for current largest vote id and increment by 1
-def newVoteId():
-    # returns document: {"Id": max}
+#search for current largest vote id and increment by 1
+def newVoteId(db):
+	#returns document: {"Id": max}
     posts = db["Votes"]
-    maxObject = db.Posts.find().sort("Id", -1).limit(1)
+    maxObject = db.Votes.find().sort("Id", -1).limit(1)
     for x in maxObject:
-        maxID = x['Id']
+        maxID = x['Id']    
     maxID = int(maxID) + 1
     return maxID
 
+def getCurrentDay():
+    current = datetime.datetime.now()
+    current = str(current)
+    new_current = current.replace(" ", "T")
+    return new_current
 
 def postQuestion(user, db):
     title = input("Please enter your question title: ")
     body = input("Please enter your question body: ")
     Tags = input("Please enter the tags associated with the post, if multiple, seperate with comma: ")
     Tags = "".join(Tags.split())
-    Tags = Tags.split(
-        ",")  # returns a list with the seperated tags as such, if the input was: "<question>, <test>" Output would be ['<question>', '<test>']
-    posts = db["Posts"]
-    newQuestion = {"Id": newPostId(db),
-                   "PostTypeId": "1",
-                   "CreationDate": date('now'),
-                   "Score": 0,
-                   "ViewCount": 0,
-                   "Body": body,
-                   "OwnerUserId": "11",
-                   "LastActivityDate": date('now'),
-                   "Title": title,
-                   "Tags": Tags,
-                   "AnswerCount": 0,
-                   "CommentCount": 0,
-                   "FavoriteCount": 0,
-                   "ContentLicense": "CC BY-SA 2.5"
-                   }
-    posts.insert_one(newQuestion)
+    Tags = Tags.split(",") # returns a list with the seperated tags as such, if the input was: "<question>, <test>" Output would be ['<question>', '<test>']
+    posts = db["posts"]
+    newQuestion =       {"Id": newPostId(db),
+                         "PostTypeId": "1",
+                         "CreationDate": getCurrentDay(),
+                         "Score": 0,
+                         "ViewCount": 0,
+                         "Body": body,
+                         "OwnerUserId": "11",
+                         "LastActivityDate": getCurrentDay(),
+                         "Title": title,
+                         "Tags": Tags,
+                         "AnswerCount": 0,
+                         "CommentCount": 0,
+                         "FavoriteCount": 0,
+                         "ContentLicense": "CC BY-SA 2.5"
+                         }
+    posts.row.insert_one(newQuestion)
     print("New question added successfully")
-    mainMenu()
+    mainMenu(db)
+    
+def searchQuestion(user,db):
+    questionId = input("enter your question ID you'd like to perform actions on: ")
+    specificMenu(user, questionId,db)
 
-
-def searchQuestion(db):
-    kw_check = True
-    keywords = ''
-    while kw_check:
-        if not keywords:
-            keywords = input("Please enter keywords separated by a comma (press 0 to return to main menu): ")
-        else:
-            kw_check = False
-    if keywords.lower() == '0':
-        mainMenu(db)
-    keywords = "".join(keywords.split()).split(",")  # user inputted keywords
-
-    print(keywords)
-
-    # posts = db.Posts.find(
-    #     {"$or": [
-    #         {"Title": {"$in": ['mail']}},
-    #         {"Body": {"$in": []}},
-    #         {"Tags": {"$in": []}}
-    #     ]}
-    # )
-    # for i in posts:
-    #     print(i)
-        # pprint.pprint(post)
-    # posts = db.Posts.find({"Title": {'$regex': '.*'+'mail'+'.*'}})
-    posts = db.Posts.find({"$or": [{"Title": {'$regex': '.*'+'mail'+'.*'}}, {"Body": {'$regex': '.*'+'mail'+'.*'}}, {"Tags": {'$regex': '.*'+'mail'+'.*'}}]})
-    # posts = db.Posts.find({"$and": [{"PostTypeId": "1"}, {"$or": [{"Title": {'$regex': '.*'+'mail'+'.*'}}, {"Body": {'$regex': '.*'+'mail'+'.*'}}, {"Tags": {'$regex': '.*'+'mail'+'.*'}}]}]})
-    # posts = db.Posts.find({"$and": [{"PostTypeId": "1"}, {
-    #     "$or": [{"Title": {"$in":keywords}}, {"Body": {"$in":keywords}},
-    #             {"Tags": {"$in":keywords}}]}]})
-    # posts = db.Posts.find({"$or": [{"Title": {"$in":keywords}}, {"Body": {"$in":keywords}},
-    #             {"Tags": {"$in":keywords}}]})
-    # posts = db.Posts.find({"Title": {"$in": ['mail']}})
-
-    print(posts)
-
-    for i in posts:
-        print(i)
-        # postID = i['Id']
-        # print(postID)
-    # for post in db.Posts.find({"PostTypeId": "1"}):
-    #     print(post)
-    # specificMenu(user, questionId) //do question actions implement later
-
-
-def answerQuestion(user, questionId):
+def answerQuestion(user, questionId, db):
     text = input("Enter the text for your answer: ")
     posts = db["posts"]
-    newAnswer = {"Id": newPostId(),
-                 "PostTypeId": "2",
-                 "ParentId": questionId,
-                 "CreationDate": date('now'),
-                 "Score": 0,
-                 "Body": text,
-                 "OwnerUserId": user,
-                 "LastActivityDate": date('now'),
-                 "CommentCount": 0,
-                 "ContentLicense": "CC BY-SA 2.5"}
-    posts.insert_one(newAnswer)
+    newAnswer = 	{"Id": newPostId(),
+                    "PostTypeId": "2",
+                    "ParentId": questionId,
+                    "CreationDate": getCurrentDay(),
+                    "Score": 0,
+                    "Body": text,
+                    "OwnerUserId": user,
+                    "LastActivityDate": getCurrentDay(),
+                    "CommentCount": 0,
+                    "ContentLicense": "CC BY-SA 2.5"}
+    posts.row.insert_one(newAnswer)
     print("New answer added successfully")
-    mainMenu()
-
-
-def listAnswers(user, questionId):
-    # return the specific question document
-    question = db.posts.find({"Id": questionId})
-    # find the accepted answer for that question
+    mainMenu(db)
+    
+def listAnswers(user, questionId, db):
+	posts = db["posts"]
+	votes = db["votes"]
+    #return the specific question document
+    question = posts.row.find( {"Id": questionId} )
+    #find the accepted answer for that question
     accId = question["AcceptedAnswerId"]
-    accAnswer = db.posts.find({"Id": accId})
-    # print the accepted answer
+    accAnswer = posts.row.find( {"Id": accId} )
+    #print the accepted answer
     text = accAnswer["Body"]
     date = accAnswer["CreationDate"]
     score = accAnswer["Score"]
-    print("Answer " + accId + "* Body: " + '%.80s' % text)  # only prints up to 80 characters
-    print("Answer " + accId + "* Creation Date: " + date)
-    print("Answer " + accId + "* Score: " + score)
-    # print the rest of the answers
-    answers = db.posts.find({"ParentId": questionId})
+    print("Answer "+ accId + "* Body: " + '%.80s' %  text) #only prints up to 80 characters
+    print("Answer "+ accId + "* Creation Date: " + date)
+    print("Answer "+ accId + "* Score: " + score)
+    #print the rest of the answers
+    answers = posts.row.find( {"ParentId": questionId} )
     for answer in answers:
         aid = answer["Id"]
         if aid == accId:  # skip printing the accepted answer
@@ -222,7 +189,7 @@ def listAnswers(user, questionId):
         print("Answer " + aid + " Score: " + score)
     # allow user to select answer to print full document
     aidSelect = input("Select an answer by typing its id as shown above: ")
-    result = db.posts.find({"Id": aidSelect})
+    result = posts.row.find({"Id": aidSelect})
     print(result)
     # allow user to vote on the answer or return to main menu
     task = input("""Select an action: 
@@ -233,10 +200,10 @@ def listAnswers(user, questionId):
     while menuCondition:
         if task.lower() == 'v':  # add an vote
             menuCondition = False
-            addVote(user, aidSelect)
+            addVote(user, aidSelect, db)
         elif task.lower() == 'r':  # return to main menu
             menuCondition = False
-            mainMenu(user)
+            mainMenu(db)
         elif task.lower() == 'e':  # exit program
             quit()
         else:
@@ -244,15 +211,34 @@ def listAnswers(user, questionId):
             continue
 
 
-def addVote(user, questionId):
+def addVote(user, questionId,db):
     votes = db["Votes"]
-    newVote = {"Id": newPostId(),
-               "PostId": questionId,
+    if user.lower() == "a":
+        newVote = { "Id": newVoteId(db),
+                    "PostId": questionId,
+                    "VoteTypeId": "2",
+	            "CreationDate": getCurrentDay()
+	          }
+        votes.insert_one(newVote)
+        print("vote added succesfully")
+        mainMenu(db)
+    voteObject = db.Votes.find({"UserId" : user,"PostId": questionId})
+    splicedDay = getCurrentDay()
+    for x in voteObject:
+        if x["CreationDate"][:9] == splicedDay[:9]:
+            print("user has already voted today!")
+            mainMenu(db)
+        else:
+            continue
+    newVote = {"Id": newVoteId(db),
+               "PostId": postId,
                "VoteTypeId": "2",
                "UserId": user,
-               "CreationDate": date('now')
+               "CreationDate": getCurrentDay()
                }
-    Votes.insert_one(newVote)
+    votes.row.insert_one(newVote)
+    print("vote added succesfully")
+    mainMenu(db)
 
 
 def main():
