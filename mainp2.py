@@ -2,7 +2,7 @@
 
 import pymongo
 import datetime
-
+from pprint import pprint
 
 def mainMenu(db):
     user = input("Enter your user id now or type 'a' to continue anonymously: ")
@@ -90,24 +90,24 @@ def displayReport(user, db):
 # search for current largest post id and increment by 1
 def newPostId(db):
     #returns document: {"Id": max}
-    posts = db["Posts"]
+    posts = db["posts"]
     maxDoc = db.posts.find().sort("Id", -1).limit(1)
     maxVal = 0
     for x in maxDoc:
         maxVal = x['Id']
     maxVal = int(maxVal) + 1
-    return maxVal
+    return str(maxVal)
 
 #search for current largest vote id and increment by 1
 def newVoteId(db):
 	#returns document: {"Id": max}
+    votes = db["votes"]
+    maxObject = votes.find().sort("Id", -1).limit(1)
     maxID = 0
-    posts = db["Votes"]
-    maxObject = db.Votes.find().sort("Id", -1).limit(1)
     for x in maxObject:
         maxID = x['Id']    
     maxID = int(maxID) + 1
-    return maxID
+    return str(maxID)
 
 #returns the current day in the same format as the date in the provided json files
 def getCurrentDay():
@@ -188,7 +188,7 @@ def searchQuestion(db):
 def answerQuestion(user, questionId, db):
     text = input("Enter the text for your answer: ")
     posts = db["posts"]
-    newAnswer = 	{"Id": newPostId(db),
+    newAnswer = 	{"Id": newPostId(),
                     "PostTypeId": "2",
                     "ParentId": questionId,
                     "CreationDate": getCurrentDay(),
@@ -198,59 +198,59 @@ def answerQuestion(user, questionId, db):
                     "LastActivityDate": getCurrentDay(),
                     "CommentCount": 0,
                     "ContentLicense": "CC BY-SA 2.5"}
-    posts.row.insert_one(newAnswer)
+    posts.insert_one(newAnswer)
     print("New answer added successfully")
     mainMenu(db)
     
 def listAnswers(user, questionId, db):
-    posts = db["posts"]
-    votes = db["votes"]
-    #return the specific question document
-    question = posts.row.find( {"Id": questionId} )
-    #find the accepted answer for that question
-    accId = question["AcceptedAnswerId"]
-    accAnswer = posts.row.find( {"Id": accId} )
-    #print the accepted answer
-    text = accAnswer["Body"]
-    date = accAnswer["CreationDate"]
-    score = accAnswer["Score"]
-    print("Answer "+ accId + "* Body: " + '%.80s' %  text) #only prints up to 80 characters
-    print("Answer "+ accId + "* Creation Date: " + date)
-    print("Answer "+ accId + "* Score: " + score)
-    #print the rest of the answers
-    answers = posts.row.find( {"ParentId": questionId} )
-    for answer in answers:
-        aid = answer["Id"]
-        if aid == accId:  # skip printing the accepted answer
-            continue
-        text = answer["Body"]
-        date = answer["CreationDate"]
-        score = answer["Score"]
-        print("Answer " + aid + " Body: " + '%.80s' % text)  # only prints up to 80 characters
-        print("Answer " + aid + " Creation Date: " + date)
-        print("Answer " + aid + " Score: " + score)
-    # allow user to select answer to print full document
-    aidSelect = input("Select an answer by typing its id as shown above: ")
-    result = posts.row.find({"Id": aidSelect})
-    print(result)
-    # allow user to vote on the answer or return to main menu
-    task = input("""Select an action: 
-        (V): Vote on Answer\n 
-        (R): Return to Main Menu\n
-        (E): Exit Program\n""")
-    menuCondition = true
-    while menuCondition:
-        if task.lower() == 'v':  # add an vote
-            menuCondition = False
-            addVote(user, aidSelect, db)
-        elif task.lower() == 'r':  # return to main menu
-            menuCondition = False
-            mainMenu(db)
-        elif task.lower() == 'e':  # exit program
-            quit()
-        else:
-            task = input("You inputted an incorrect choice, please try again: ")
-            continue
+	posts = db["posts"]
+	votes = db["votes"]
+	#return the specific question document
+	question = posts.find_one( {"Id": questionId} )
+	#find the accepted answer for that question
+	accId = question["AcceptedAnswerId"]
+	accAnswer = posts.find_one( {"Id": accId} )
+	#print the accepted answer
+	text = accAnswer["Body"]
+	date = accAnswer["CreationDate"]
+	score = accAnswer["Score"]
+	print("Answer "+ accId + "* Body: " + '%.80s' %  text) #only prints up to 80 characters
+	print("Answer "+ accId + "* Creation Date: " + date)
+	print("Answer "+ accId + "* Score: " + str(score))
+	#print the rest of the answers
+	answers = posts.find( {"ParentId": questionId} )
+	for answer in answers:
+		aid = answer["Id"]
+		if aid == accId: #skip printing the accepted answer
+			continue
+		text = answer["Body"]
+		date = answer["CreationDate"]
+		score = answer["Score"]
+		print("Answer "+aid+" Body: " + '%.80s' % text) #only prints up to 80 characters
+		print("Answer "+aid+" Creation Date: " + date)
+		print("Answer "+aid+" Score: " + str(score))
+	#allow user to select answer to print full document
+	aidSelect = input("Select an answer by typing its id as shown above: ")
+	result = posts.find_one({"Id": aidSelect})
+	pprint(result)
+	#allow user to vote on the answer or return to main menu
+	task = input("""Select an action: 
+		(V): Vote on Answer\n 
+		(R): Return to Main Menu\n
+		(E): Exit Program\n""")
+	menuCondition = True
+	while menuCondition:
+		if task.lower() == 'v':  # add an vote
+			menuCondition = False
+			addVote(user, aidSelect, db)
+		elif task.lower() == 'r':  # return to main menu
+			menuCondition = False
+			mainMenu(db)
+		elif task.lower() == 'e':  # exit program
+			quit()
+		else:
+			task = input("You inputted an incorrect choice, please try again: ")
+			continue
 
 
 def addVote(user, questionId,db):
@@ -285,7 +285,7 @@ def addVote(user, questionId,db):
                "UserId": user,
                "CreationDate": getCurrentDay()
                }
-    votes.row.insert_one(newVote)
+    votes.insert_one(newVote)
     posts = db["Posts"]
     score = posts.find_one( {"Id": questionId} )
     x = score["Score"]
