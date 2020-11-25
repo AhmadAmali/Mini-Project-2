@@ -128,27 +128,28 @@ def postQuestion(user, db):
     body = input("Please enter your question body: ")
     Tags = input("Please enter the tags associated with the post, if multiple, seperate with comma: ")
     Tags = "".join(Tags.split())
-    Tags = Tags.split(",")  # returns a list with the seperated tags as such, if the input was: "<question>, <test>" Output would be ['<question>', '<test>']
-    tagStr = ''
-    for tag in Tags:
-        tagStr += '<' + tag + '>'
-    posts = db["Posts"]
-    newQuestion =       {"Id": newPostId(db),
+    Tags = Tags.split(",") # returns a list with the seperated tags as such, if the input was: "<question>, <test>" Output would be ['<question>', '<test>']
+    posts = db["posts"]
+    newid = newPostId(db)
+    newQuestion =       {"Id": newid,
                          "PostTypeId": "1",
                          "CreationDate": getCurrentDay(),
                          "Score": 0,
                          "ViewCount": 0,
                          "Body": body,
-                         "OwnerUserId": "11",
                          "LastActivityDate": getCurrentDay(),
                          "Title": title,
-                         "Tags": tagStr,
+                         "Tags": Tags,
                          "AnswerCount": 0,
                          "CommentCount": 0,
                          "FavoriteCount": 0,
                          "ContentLicense": "CC BY-SA 2.5"
                          }
     posts.insert_one(newQuestion)
+    if user != "a":
+    	oldValue = { "Id" : newid }
+    	newValue = {"$set":{ "OwnerUserId" : user }}
+    	posts.update_one(oldValue,newValue)
     print("New question added successfully")
     mainMenu(db)
 
@@ -203,18 +204,22 @@ def searchQuestion(user,db):
 
 def answerQuestion(user, questionId, db):
     text = input("Enter the text for your answer: ")
-    posts = db["posts"]
-    newAnswer = 	{"Id": newPostId(db),
+    posts = db["Posts"]
+    newid = newPostId(db)
+    newAnswer = 	{"Id": newid,
                     "PostTypeId": "2",
                     "ParentId": questionId,
                     "CreationDate": getCurrentDay(),
                     "Score": 0,
                     "Body": text,
-                    "OwnerUserId": user,
                     "LastActivityDate": getCurrentDay(),
                     "CommentCount": 0,
                     "ContentLicense": "CC BY-SA 2.5"}
     posts.insert_one(newAnswer)
+    if user != "a":
+    	oldValue = { "Id" : newid }
+    	newValue = {"$set":{ "OwnerUserId" : user }}
+    	posts.update_one(oldValue,newValue)
     print("New answer added successfully")
     mainMenu(db)
 
@@ -224,22 +229,27 @@ def listAnswers(user, questionId, db):
 	votes = db["Votes"]
 	#return the specific question document
 	question = posts.find_one( {"Id": questionId} )
-	#find the accepted answer for that question
-	accId = question["AcceptedAnswerId"]
-	accAnswer = posts.find_one( {"Id": accId} )
-	#print the accepted answer
-	text = accAnswer["Body"]
-	date = accAnswer["CreationDate"]
-	score = accAnswer["Score"]
-	print("Answer "+ accId + "* Body: " + '%.80s' %  text) #only prints up to 80 characters
-	print("Answer "+ accId + "* Creation Date: " + date)
-	print("Answer "+ accId + "* Score: " + str(score))
+	#find the accepted answer for that question if there is one
+	if hasattr(question, "AcceptedAnswerId"):
+		accId = question["AcceptedAnswerId"]
+		accAnswer = posts.find_one( {"Id": accId} )
+		#print the accepted answer
+		text = accAnswer["Body"]
+		date = accAnswer["CreationDate"]
+		score = accAnswer["Score"]
+		print("Answer "+ accId + "* Body: " + '%.80s' %  text) #only prints up to 80 characters
+		print("Answer "+ accId + "* Creation Date: " + date)
+		print("Answer "+ accId + "* Score: " + str(score))
 	#print the rest of the answers
 	answers = posts.find( {"ParentId": questionId} )
+	# if no answers in the list
+	if not answers:
+		print("No Answers for this Question\n")
 	for answer in answers:
 		aid = answer["Id"]
-		if aid == accId: #skip printing the accepted answer
-			continue
+		if hasattr(question, "AcceptedAnswerId"):
+			if aid == accId: #skip printing the accepted answer
+				continue
 		text = answer["Body"]
 		date = answer["CreationDate"]
 		score = answer["Score"]
@@ -247,27 +257,30 @@ def listAnswers(user, questionId, db):
 		print("Answer "+aid+" Creation Date: " + date)
 		print("Answer "+aid+" Score: " + str(score))
 	#allow user to select answer to print full document
-	aidSelect = input("Select an answer by typing its id as shown above: ")
-	result = posts.find_one({"Id": aidSelect})
-	pprint(result)
-	#allow user to vote on the answer or return to main menu
-	task = input("""Select an action: 
-		(V): Vote on Answer\n 
-		(R): Return to Main Menu\n
-		(E): Exit Program\n""")
-	menuCondition = True
-	while menuCondition:
-		if task.lower() == 'v':  # add an vote
-			menuCondition = False
-			addVote(user, aidSelect, db)
-		elif task.lower() == 'r':  # return to main menu
-			menuCondition = False
-			mainMenu(db)
-		elif task.lower() == 'e':  # exit program
-			quit()
-		else:
-			task = input("You inputted an incorrect choice, please try again: ")
-			continue
+	if not answers:
+		mainMenu(db)
+	else:
+		aidSelect = input("Select an answer by typing its id as shown above: ")
+		result = posts.find_one({"Id": aidSelect})
+		pprint(result)
+		#allow user to vote on the answer or return to main menu
+		task = input("""Select an action: 
+			(V): Vote on Answer\n 
+			(R): Return to Main Menu\n
+			(E): Exit Program\n""")
+		menuCondition = True
+		while menuCondition:
+			if task.lower() == 'v':  # add an vote
+				menuCondition = False
+				addVote(user, aidSelect, db)
+			elif task.lower() == 'r':  # return to main menu
+				menuCondition = False
+				mainMenu(db)
+			elif task.lower() == 'e':  # exit program
+				quit()
+			else:
+				task = input("You inputted an incorrect choice, please try again: ")
+				continue
 
 
 def addVote(user, questionId, db):
