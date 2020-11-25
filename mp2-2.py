@@ -25,23 +25,27 @@ def createCollections(db):
     votes = db["Votes"]
 
     # read json files and insert them into collections
+    start = time.time()
     with open('Posts.json') as file:
         read_data = file.read()
         data = json.loads(read_data)
         posts.insert_many(data['posts']['row'])
-        print("Done Posts")
+        end = time.time()
+        print("Done Posts in ", end - start)
 
     with open('Tags.json') as file:
         read_data = file.read()
         data = json.loads(read_data)
         tags.insert_many(data['tags']['row'])
-        print("Done Tags")
+        end = time.time()
+        print("Done Tags ", end - start)
 
     with open('Votes.json') as file:
         read_data = file.read()
         data = json.loads(read_data)
         votes.insert_many(data['votes']['row'])
-        print("Done Votes")
+        end = time.time()
+        print("Done Votes ", end - start)
 
         colList = db.list_collection_names()
         if "tags" in colList:
@@ -55,9 +59,11 @@ def createCollections(db):
 
 def createTerms(db):
     start = time.time()
-    removeNonletter = re.compile('[^a-zA-Z ]')
-    remmoveHtml = re.compile('<.*?>')
-    smallWords = re.compile(r'\W*\b\w{1,2}\b')
+
+    p1 = '[^a-zA-Z ]'
+    p2 = '<.*?>'
+    p3 = r'\W*\b\w{1,2}\b'
+    pattern = re.compile("(%s|%s|%s)" % (p3, p1, p2))
 
     for doc in db.Posts.find().sort([("$natural", 1)]):
         raw_terms = ''
@@ -67,40 +73,25 @@ def createTerms(db):
             # print("no title")
             pass
         try:
-            raw_terms = raw_terms + ' ' + doc['Body']
+            raw_terms = raw_terms + '  ' + doc['Body']
         except KeyError:
             # print("no body")
             pass
         try:
-            # print(raw_terms)
             print(doc['Id'])
-            db.Posts.update({"Id": doc['Id']}, {"$set": {"Terms": list(dict.fromkeys((removeNonletter.sub('', smallWords.sub('', re.sub(remmoveHtml, '', raw_terms.lower())))).split()))}})
+            db.Posts.update({"_id": doc['_id']}, {"$set": {"Terms": list(set(pattern.sub(' ', raw_terms.lower()).split()))}})
         except:
             pass
     end = time.time()
     print("TIME: ", end - start)
 
-# def parseTerms(doc):  // not required delete later
-    # removeNonletter = re.compile('[^a-zA-Z ]')
-    # remmoveHtml = re.compile('<.*?>')
-    # smallWords = re.compile(r'\W*\b\w{1,2}\b')
-
-    # terms = doc.lower()
-    # terms = re.sub(remmoveHtml, '', terms)
-    # terms = smallWords.sub('', terms)
-    # terms = removeNonletter.sub('', terms)
-    # terms = terms.split()
-    # terms = list(dict.fromkeys(terms))
-
-    # return terms
-
 
 def main():
     # port = input("Please enter the port you'd like to run the database on: ")
-    client = pymongo.MongoClient("localhost", 27018)
+    client = pymongo.MongoClient("localhost", 27017)
     db = client['291db']
-    createTerms(db)
-    # createCollections(db)
+    # createTerms(db)
+    createCollections(db)
 
 
 if __name__ == "__main__":
