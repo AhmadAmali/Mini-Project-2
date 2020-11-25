@@ -62,7 +62,7 @@ def displayReport(user, db):
     votes = db["votes"]
     print("User report for " + user + "...\n")
     # questions = all question posts owned by the user
-    questions = posts.row.find({},"$and":[{"OwnerUserId": user},{"PostTypeId": "1"}])
+    #questions = posts.row.find({},"$and":[{"OwnerUserId": user},{"PostTypeId": "1"}])
     # count number of questions owned
     countAggr = questions.aggregate({ "$count": "qcount" })
     count = countAggr["qcount"]
@@ -72,7 +72,7 @@ def displayReport(user, db):
     avgScore = scoreAggr["average"]
     print("Average score for questions: " + avgScore)
     # answers = all answer posts owned by the user
-    answers = posts.row.find("$and":[{"OwnerUserId": user},{"PostTypeId": "2"}])
+    #answers = posts.row.find("$and":[{"OwnerUserId": user},{"PostTypeId": "2"}])
     # count number of answers owned
     countAggr = answers.aggregate({ "$count": "acount" })
     count = countAggr["acount"]
@@ -107,6 +107,7 @@ def newVoteId(db):
     maxID = int(maxID) + 1
     return maxID
 
+#returns the current day in the same format as the date in the provided json files
 def getCurrentDay():
     current = datetime.datetime.now()
     current = str(current)
@@ -161,8 +162,8 @@ def answerQuestion(user, questionId, db):
     mainMenu(db)
     
 def listAnswers(user, questionId, db):
-	posts = db["posts"]
-	votes = db["votes"]
+    posts = db["posts"]
+    votes = db["votes"]
     #return the specific question document
     question = posts.row.find( {"Id": questionId} )
     #find the accepted answer for that question
@@ -220,6 +221,14 @@ def addVote(user, questionId,db):
 	            "CreationDate": getCurrentDay()
 	          }
         votes.insert_one(newVote)
+        posts = db["Posts"]
+        score = posts.find_one( {"Id": questionId} )
+        x = score["Score"]
+        newScore = x + 1
+        print(newScore)
+        oldValue = { "Id" : questionId }
+        newValue = {"$set":{ "Score" : newScore }}
+        db.Posts.update_one(oldValue,newValue)
         print("vote added succesfully")
         mainMenu(db)
     voteObject = db.Votes.find({"UserId" : user,"PostId": questionId})
