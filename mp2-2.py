@@ -97,7 +97,7 @@ def createTerms(db):
 
 def main():
     # port = input("Please enter the port you'd like to run the database on: ")
-    client = pymongo.MongoClient("localhost", 27018)
+    client = pymongo.MongoClient("localhost", 27017)
     db = client['291db']
     createTerms(db)
     # createCollections(db)
