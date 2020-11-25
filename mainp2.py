@@ -227,6 +227,8 @@ def searchQuestion(user, db):
                 valid_input = False
                 for doc in db.Posts.find({"Id": questionID}):
                     pprint(doc)
+                    v_count = doc["ViewCount"] + 1
+                    db.Posts.update_one({"Id": questionID}, {"$set": {"ViewCount": v_count}})
                 specificMenu(user, questionID, db)
 
 
