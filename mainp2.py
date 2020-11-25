@@ -1,8 +1,10 @@
 ## mini project 2, CMPUT291
 
 import pymongo
-import datetime
+import datetime, time
+from prettytable import PrettyTable
 from pprint import pprint
+
 
 def mainMenu(db):
     user = input("Enter your user id now or type 'a' to continue anonymously: ")
@@ -20,7 +22,7 @@ def mainMenu(db):
             postQuestion(user, db)
         elif task.lower() == 's':  # search for a post
             menuCondition = False
-            searchQuestion(user, db)
+            searchQuestion(db)
         elif task.lower() == 'e':  # exit program
             quit()
         else:
@@ -129,27 +131,27 @@ def postQuestion(user, db):
     Tags = Tags.split(
         ",")  # returns a list with the seperated tags as such, if the input was: "<question>, <test>" Output would be ['<question>', '<test>']
     posts = db["posts"]
-    newQuestion =       {"Id": newPostId(db),
-                         "PostTypeId": "1",
-                         "CreationDate": getCurrentDay(),
-                         "Score": 0,
-                         "ViewCount": 0,
-                         "Body": body,
-                         "OwnerUserId": "11",
-                         "LastActivityDate": getCurrentDay(),
-                         "Title": title,
-                         "Tags": Tags,
-                         "AnswerCount": 0,
-                         "CommentCount": 0,
-                         "FavoriteCount": 0,
-                         "ContentLicense": "CC BY-SA 2.5"
-                         }
+    newQuestion = {"Id": newPostId(db),
+                   "PostTypeId": "1",
+                   "CreationDate": getCurrentDay(),
+                   "Score": 0,
+                   "ViewCount": 0,
+                   "Body": body,
+                   "OwnerUserId": "11",
+                   "LastActivityDate": getCurrentDay(),
+                   "Title": title,
+                   "Tags": Tags,
+                   "AnswerCount": 0,
+                   "CommentCount": 0,
+                   "FavoriteCount": 0,
+                   "ContentLicense": "CC BY-SA 2.5"
+                   }
     Posts.insert_one(newQuestion)
     print("New question added successfully")
     mainMenu(db)
 
 
-def searchQuestion(db):
+def searchQuestion(db):  # handles search functionality here
     kw_check = True
     keywords = ''
     while kw_check:
@@ -162,105 +164,116 @@ def searchQuestion(db):
     keywords = "".join(keywords.split()).split(",")  # user inputted keywords
 
     print(keywords)
-    # posts = db.Posts.find(
-    #     {"$or": [
-    #         {"Title": {"$in": ['mail']}},
-    #         {"Body": {"$in": []}},
-    #         {"Tags": {"$in": []}}
-    #     ]}
-    # )
-    # for i in posts:
-    #     print(i)
-    # pprint.pprint(post)
-    # posts = db.Posts.find({"Title": {'$regex': '.*'+'mail'+'.*'}})
-    # posts = db.Posts.find({"$or": [{"Title": {'$regex': '.*' + 'mail' + '.*'}},
-    #                                {"Body": {'$regex': '.*' + 'mail' + '.*'}},
-    #                                {"Tags": {'$regex': '.*' + 'mail' + '.*'}}]})
-    # posts = db.Posts.find({"$and": [{"PostTypeId": "1"}, {"$or": [{"Title": {'$regex': '.*'+'mail'+'.*'}}, {"Body": {'$regex': '.*'+'mail'+'.*'}}, {"Tags": {'$regex': '.*'+'mail'+'.*'}}]}]})
-    # posts = db.Posts.find({"$and": [{"PostTypeId": "1"}, {
-    #     "$or": [{"Title": {"$in":keywords}}, {"Body": {"$in":keywords}},
-    #             {"Tags": {"$in":keywords}}]}]})
-    # posts = db.Posts.find({"$or": [{"Title": {"$in":keywords}}, {"Body": {"$in":keywords}},
-    #             {"Tags": {"$in":keywords}}]})
-    # posts = db.Posts.find({"Title": {"$in": ['mail']}})
+    # mongodb query to retrieve search results
+    posts = db.Posts.find(
+        {"$and": [{"PostTypeId": "1"}, {"Terms": {"$in": keywords}}]})
 
-    # print(posts)
-    # for i in posts:
-    #     print(i)
-    # postID = i['Id']
-    # print(postID)
-    # for post in db.Posts.find({"PostTypeId": "1"}):
-    #     print(post)
-    # specificMenu(user, questionId) //do question actions implement later
+    all_data = []
+    # result parsing
+    print(posts.count(), "results found")
+    for post in posts:
+        data = []
+        try:
+            data.append(post["Id"])
+        except:
+            data.append("N/A")
+        try:
+            data.append(post["Title"])
+        except:
+            data.append("N/A")
+        try:
+            data.append(post["CreationDate"])
+        except:
+            data.append("N/A")
+        try:
+            data.append(post["Score"])
+        except:
+            data.append("N/A")
+        try:
+            data.append(post["AnswerCount"])
+        except:
+            data.append("N/A")
+        all_data.append(data)
+    start = time.time()
+    print_search_table(all_data)  # print results in table using print_search_table
+    end = time.time()
+    print("Search in", end - start, "seconds")
+
+
+def print_search_table(data):  # handle printing the table here
+    table = PrettyTable(['ID', 'Title', 'Creation Date', 'Score', 'Answers'])
+    for i in data:  # prints data in table format (prints all results)
+        table.add_row(i)
+    print(table)
 
 
 def answerQuestion(user, questionId, db):
     text = input("Enter the text for your answer: ")
     posts = db["posts"]
-    newAnswer = 	{"Id": newPostId(),
-                    "PostTypeId": "2",
-                    "ParentId": questionId,
-                    "CreationDate": getCurrentDay(),
-                    "Score": 0,
-                    "Body": text,
-                    "OwnerUserId": user,
-                    "LastActivityDate": getCurrentDay(),
-                    "CommentCount": 0,
-                    "ContentLicense": "CC BY-SA 2.5"}
+    newAnswer = {"Id": newPostId(),
+                 "PostTypeId": "2",
+                 "ParentId": questionId,
+                 "CreationDate": getCurrentDay(),
+                 "Score": 0,
+                 "Body": text,
+                 "OwnerUserId": user,
+                 "LastActivityDate": getCurrentDay(),
+                 "CommentCount": 0,
+                 "ContentLicense": "CC BY-SA 2.5"}
     posts.insert_one(newAnswer)
     print("New answer added successfully")
     mainMenu(db)
 
 
 def listAnswers(user, questionId, db):
-	posts = db["posts"]
-	votes = db["votes"]
-	#return the specific question document
-	question = posts.find_one( {"Id": questionId} )
-	#find the accepted answer for that question
-	accId = question["AcceptedAnswerId"]
-	accAnswer = posts.find_one( {"Id": accId} )
-	#print the accepted answer
-	text = accAnswer["Body"]
-	date = accAnswer["CreationDate"]
-	score = accAnswer["Score"]
-	print("Answer "+ accId + "* Body: " + '%.80s' %  text) #only prints up to 80 characters
-	print("Answer "+ accId + "* Creation Date: " + date)
-	print("Answer "+ accId + "* Score: " + str(score))
-	#print the rest of the answers
-	answers = posts.find( {"ParentId": questionId} )
-	for answer in answers:
-		aid = answer["Id"]
-		if aid == accId: #skip printing the accepted answer
-			continue
-		text = answer["Body"]
-		date = answer["CreationDate"]
-		score = answer["Score"]
-		print("Answer "+aid+" Body: " + '%.80s' % text) #only prints up to 80 characters
-		print("Answer "+aid+" Creation Date: " + date)
-		print("Answer "+aid+" Score: " + str(score))
-	#allow user to select answer to print full document
-	aidSelect = input("Select an answer by typing its id as shown above: ")
-	result = posts.find_one({"Id": aidSelect})
-	pprint(result)
-	#allow user to vote on the answer or return to main menu
-	task = input("""Select an action: 
+    posts = db["posts"]
+    votes = db["votes"]
+    # return the specific question document
+    question = posts.find_one({"Id": questionId})
+    # find the accepted answer for that question
+    accId = question["AcceptedAnswerId"]
+    accAnswer = posts.find_one({"Id": accId})
+    # print the accepted answer
+    text = accAnswer["Body"]
+    date = accAnswer["CreationDate"]
+    score = accAnswer["Score"]
+    print("Answer " + accId + "* Body: " + '%.80s' % text)  # only prints up to 80 characters
+    print("Answer " + accId + "* Creation Date: " + date)
+    print("Answer " + accId + "* Score: " + str(score))
+    # print the rest of the answers
+    answers = posts.find({"ParentId": questionId})
+    for answer in answers:
+        aid = answer["Id"]
+        if aid == accId:  # skip printing the accepted answer
+            continue
+        text = answer["Body"]
+        date = answer["CreationDate"]
+        score = answer["Score"]
+        print("Answer " + aid + " Body: " + '%.80s' % text)  # only prints up to 80 characters
+        print("Answer " + aid + " Creation Date: " + date)
+        print("Answer " + aid + " Score: " + str(score))
+    # allow user to select answer to print full document
+    aidSelect = input("Select an answer by typing its id as shown above: ")
+    result = posts.find_one({"Id": aidSelect})
+    pprint(result)
+    # allow user to vote on the answer or return to main menu
+    task = input("""Select an action: 
 		(V): Vote on Answer\n 
 		(R): Return to Main Menu\n
 		(E): Exit Program\n""")
-	menuCondition = True
-	while menuCondition:
-		if task.lower() == 'v':  # add an vote
-			menuCondition = False
-			addVote(user, aidSelect, db)
-		elif task.lower() == 'r':  # return to main menu
-			menuCondition = False
-			mainMenu(db)
-		elif task.lower() == 'e':  # exit program
-			quit()
-		else:
-			task = input("You inputted an incorrect choice, please try again: ")
-			continue
+    menuCondition = True
+    while menuCondition:
+        if task.lower() == 'v':  # add an vote
+            menuCondition = False
+            addVote(user, aidSelect, db)
+        elif task.lower() == 'r':  # return to main menu
+            menuCondition = False
+            mainMenu(db)
+        elif task.lower() == 'e':  # exit program
+            quit()
+        else:
+            task = input("You inputted an incorrect choice, please try again: ")
+            continue
 
 
 def addVote(user, questionId, db):
@@ -276,9 +289,9 @@ def addVote(user, questionId, db):
         score = posts.find_one({"Id": questionId})
         x = score["Score"]
         newScore = x + 1
-        oldValue = { "Id" : questionId }
-        newValue = {"$set":{ "Score" : newScore }}
-        db.Posts.update_one(oldValue,newValue)
+        oldValue = {"Id": questionId}
+        newValue = {"$set": {"Score": newScore}}
+        db.Posts.update_one(oldValue, newValue)
         print("vote added succesfully")
         mainMenu(db)
     voteObject = db.Votes.find({"UserId": user, "PostId": questionId})
@@ -297,22 +310,21 @@ def addVote(user, questionId, db):
                }
     votes.insert_one(newVote)
     posts = db["Posts"]
-    score = posts.find_one( {"Id": questionId} )
+    score = posts.find_one({"Id": questionId})
     x = score["Score"]
     newScore = x + 1
-    oldValue = { "Id" : questionId }
-    newValue = {"$set":{ "Score" : newScore }}
-    db.Posts.update_one(oldValue,newValue)    
+    oldValue = {"Id": questionId}
+    newValue = {"$set": {"Score": newScore}}
+    db.Posts.update_one(oldValue, newValue)
     print("vote added succesfully")
     mainMenu(db)
 
 
 def main():
-    # port = input("Please enter the port you'd like to run the database on: ")
-    client = pymongo.MongoClient("localhost", 27017)
+    port = int(input("Please enter the port you'd like to run the database on: "))
+    client = pymongo.MongoClient("localhost", port)
     db = client['291db']
-    # mainMenu(db)
-    searchQuestion(db)
+    mainMenu(db)
 
 
 if __name__ == "__main__":

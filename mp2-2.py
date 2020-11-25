@@ -31,21 +31,21 @@ def createCollections(db):
         data = json.loads(read_data)
         posts.insert_many(data['posts']['row'])
         end = time.time()
-        print("Done Posts in ", end - start)
+        print("Posts collection created in ", end - start, "seconds")
 
     with open('Tags.json') as file:
         read_data = file.read()
         data = json.loads(read_data)
         tags.insert_many(data['tags']['row'])
         end = time.time()
-        print("Done Tags in ", end - start)
+        print("Tags collection created in ", end - start, "seconds")
 
     with open('Votes.json') as file:
         read_data = file.read()
         data = json.loads(read_data)
         votes.insert_many(data['votes']['row'])
         end = time.time()
-        print("Done Votes in ", end - start)
+        print("Votes collection created in ", end - start, "seconds")
 
         colList = db.list_collection_names()
         if "tags" in colList:
@@ -78,17 +78,21 @@ def createTerms(db):
             # print("no body")
             pass
         try:
+            raw_terms = raw_terms + ' ' + doc["Tags"]
+        except KeyError:
+            pass
+        try:
             print(doc['Id'])
             db.Posts.update({"_id": doc['_id']}, {"$set": {"Terms": list(set(pattern.sub(' ', raw_terms.lower()).split()))}})
         except:
             pass
     end = time.time()
-    print("Terms Created in ", end - start)
+    print("Terms Created in ", end - start, "seconds")
 
 
 def main():
-    # port = input("Please enter the port you'd like to run the database on: ")
-    client = pymongo.MongoClient("localhost", 27017)
+    port = int(input("Please enter the port you'd like to run the database on: "))
+    client = pymongo.MongoClient("localhost", port)
     db = client['291db']
     # createTerms(db)
     createCollections(db)
