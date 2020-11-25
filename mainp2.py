@@ -7,12 +7,13 @@ import datetime
 def mainMenu(db):
     user = input("Enter your user id now or type 'a' to continue anonymously: ")
     if user.lower() != 'a':
-        displayReport(user)
+        #displayReport(user)
+        pass
     menuCondition = True
     task = input("""Select the task you would like to perform. You can also type E to exit\n 
     (P): Post a Question\n 
     (S): Search for Question\n
-    (0): Exit Program\n""")
+    (E): Exit Program\n""")
     while menuCondition:
         if task.lower() == 'p':  # add a question
             menuCondition = False
@@ -96,7 +97,7 @@ def newPostId(db):
 def newVoteId(db):
 	#returns document: {"Id": max}
     posts = db["Votes"]
-    maxObject = db.Posts.find().sort("Id", -1).limit(1)
+    maxObject = db.Votes.find().sort("Id", -1).limit(1)
     for x in maxObject:
         maxID = x['Id']    
     maxID = int(maxID) + 1
@@ -206,6 +207,23 @@ def listAnswers(user, questionId):
 
 def addVote(user, questionId,db):
     votes = db["Votes"]
+    if user.lower() == "a":
+        newVote = { "Id": newVoteId(db),
+                    "PostId": questionId,
+                    "VoteTypeId": "2",
+	            "CreationDate": getCurrentDay()
+	          }
+        votes.insert_one(newVote)
+        print("vote added succesfully")
+        mainMenu(db)
+    voteObject = db.Votes.find({"UserId" : user,"PostId": questionId})
+    splicedDay = getCurrentDay()
+    for x in voteObject:
+        if x["CreationDate"][:9] == splicedDay[:9]:
+            print("user has already voted today!")
+            mainMenu(db)
+        else:
+            continue
     newVote = {"Id": newVoteId(db),
                "PostId": questionId,
                "VoteTypeId": "2",
