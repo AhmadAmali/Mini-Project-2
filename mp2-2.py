@@ -82,19 +82,17 @@ def createTerms(db):
         except KeyError:
             pass
         try:
-            print(doc['Id'])
             db.Posts.update({"_id": doc['_id']}, {"$set": {"Terms": list(set(pattern.sub(' ', raw_terms.lower()).split()))}})
         except:
             pass
     end = time.time()
-    print("Terms Created in ", end - start, "seconds")
+    #print("Terms Created in ", end - start, "seconds")
 
 
 def main():
     port = int(input("Please enter the port you'd like to run the database on: "))
     client = pymongo.MongoClient("localhost", port)
     db = client['291db']
-    # createTerms(db)
     createCollections(db)
 
 

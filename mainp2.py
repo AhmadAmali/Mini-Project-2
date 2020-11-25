@@ -177,7 +177,6 @@ def searchQuestion(user, db):
         mainMenu(user, db)
     keywords = "".join(keywords.split()).split(",")  # user inputted keywords
 
-    print(keywords)
     # mongodb query to retrieve search results
     posts = db.Posts.find(
         {"$and": [{"PostTypeId": "1"}, {"Terms": {"$in": keywords}}]})
@@ -209,10 +208,10 @@ def searchQuestion(user, db):
         except:
             data.append("N/A")
         all_data.append(data)
-    start = time.time()
+    #start = time.time()
     print_search_table(all_data)  # print results in table using print_search_table
-    end = time.time()
-    print("Search in", end - start, "seconds")
+    #end = time.time()
+    #print("Search in", end - start, "seconds")
 
     if p_count == 0:
         mainMenu(user, db)
