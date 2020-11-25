@@ -35,7 +35,6 @@ def mainMenu(user, db):
             task = input("You inputted an incorrect choice, please try again: ")
             continue
 
-
 def specificMenu(user, questionId, db):
     menuCondition = True
     task = input("""Select the task you would like to perform. You can also type E to exit\n 
@@ -136,24 +135,26 @@ def postQuestion(user, db):
     body = input("Please enter your question body: ")
     Tags = input("Please enter the tags associated with the post, if multiple, seperate with comma: ")
     Tags = "".join(Tags.split())
-    Tags = Tags.split(
-        ",")  # returns a list with the seperated tags as such, if the input was: "<question>, <test>" Output would be ['<question>', '<test>']
-    posts = db["posts"]
+    Tags = Tags.split(",")  # returns a list with the seperated tags as such, if the input was: "<question>, <test>" Output would be ['<question>', '<test>']
+    tagStr = ''
+    for tag in Tags:
+        tagStr += '<' + tag + '>'
+    posts = db["Posts"]
     newid = newPostId(db)
-    newQuestion = {"Id": newid,
-                   "PostTypeId": "1",
-                   "CreationDate": getCurrentDay(),
-                   "Score": 0,
-                   "ViewCount": 0,
-                   "Body": body,
-                   "LastActivityDate": getCurrentDay(),
-                   "Title": title,
-                   "Tags": Tags,
-                   "AnswerCount": 0,
-                   "CommentCount": 0,
-                   "FavoriteCount": 0,
-                   "ContentLicense": "CC BY-SA 2.5"
-                   }
+    newQuestion =       {"Id": newid,
+                         "PostTypeId": "1",
+                         "CreationDate": getCurrentDay(),
+                         "Score": 0,
+                         "ViewCount": 0,
+                         "Body": body,
+                         "LastActivityDate": getCurrentDay(),
+                         "Title": title,
+                         "Tags": tagStr,
+                         "AnswerCount": 0,
+                         "CommentCount": 0,
+                         "FavoriteCount": 0,
+                         "ContentLicense": "CC BY-SA 2.5"
+                         }
     posts.insert_one(newQuestion)
     if user != "a":
         oldValue = {"Id": newid}
@@ -352,7 +353,7 @@ def addVote(user, questionId, db):
         else:
             continue
     newVote = {"Id": newPostId(db),
-               "PostId": postId,
+               "PostId": questionId,
                "VoteTypeId": "2",
                "UserId": user,
                "CreationDate": getCurrentDay()
