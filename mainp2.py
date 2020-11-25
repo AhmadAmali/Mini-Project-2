@@ -113,6 +113,7 @@ def getCurrentDay():
     new_current = current.replace(" ", "T")
     return new_current
 
+
 def postQuestion(user, db):
     title = input("Please enter your question title: ")
     body = input("Please enter your question body: ")
@@ -139,9 +140,47 @@ def postQuestion(user, db):
     print("New question added successfully")
     mainMenu(db)
     
-def searchQuestion(user,db):
-    questionId = input("enter your question ID you'd like to perform actions on: ")
-    specificMenu(user, questionId,db)
+def searchQuestion(db):
+    kw_check = True
+    keywords = ''
+    while kw_check:
+        if not keywords:
+            keywords = input("Please enter keywords separated by a comma (press 0 to return to main menu): ")
+        else:
+            kw_check = False
+    if keywords.lower() == '0':
+        mainMenu(db)
+    keywords = "".join(keywords.split()).split(",")  # user inputted keywords
+
+    print(keywords)
+    # posts = db.Posts.find(
+    #     {"$or": [
+    #         {"Title": {"$in": ['mail']}},
+    #         {"Body": {"$in": []}},
+    #         {"Tags": {"$in": []}}
+    #     ]}
+    # )
+    # for i in posts:
+    #     print(i)
+        # pprint.pprint(post)
+    # posts = db.Posts.find({"Title": {'$regex': '.*'+'mail'+'.*'}})
+    posts = db.Posts.find({"$or": [{"Title": {'$regex': '.*'+'mail'+'.*'}}, {"Body": {'$regex': '.*'+'mail'+'.*'}}, {"Tags": {'$regex': '.*'+'mail'+'.*'}}]})
+    # posts = db.Posts.find({"$and": [{"PostTypeId": "1"}, {"$or": [{"Title": {'$regex': '.*'+'mail'+'.*'}}, {"Body": {'$regex': '.*'+'mail'+'.*'}}, {"Tags": {'$regex': '.*'+'mail'+'.*'}}]}]})
+    # posts = db.Posts.find({"$and": [{"PostTypeId": "1"}, {
+    #     "$or": [{"Title": {"$in":keywords}}, {"Body": {"$in":keywords}},
+    #             {"Tags": {"$in":keywords}}]}]})
+    # posts = db.Posts.find({"$or": [{"Title": {"$in":keywords}}, {"Body": {"$in":keywords}},
+    #             {"Tags": {"$in":keywords}}]})
+    # posts = db.Posts.find({"Title": {"$in": ['mail']}})
+
+    # print(posts)
+    # for i in posts:
+    #     print(i)
+        # postID = i['Id']
+        # print(postID)
+    # for post in db.Posts.find({"PostTypeId": "1"}):
+    #     print(post)
+    # specificMenu(user, questionId) //do question actions implement later
 
 def answerQuestion(user, questionId, db):
     text = input("Enter the text for your answer: ")
