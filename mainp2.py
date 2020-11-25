@@ -6,16 +6,20 @@ from pprint import pprint
 import random
 import string
 
-def mainMenu(db):
-    user = input("Enter your user id now or type 'a' to continue anonymously: ")
-    if user.lower() != 'a':
-        displayReport(user, db)
+def login(db):
+	user = input("Enter your user id now or type 'a' to continue anonymously: ")
+	user = user.lower()
+	if user.lower() != 'a':
+		displayReport(user, db)
+	mainMenu(user, db)
+
+def mainMenu(user, db):
+
     menuCondition = True
     task = input("""Select the task you would like to perform. You can also type E to exit\n 
     (P): Post a Question\n 
     (S): Search for Question\n
     (E): Exit Program\n""")
-
     while menuCondition:
         if task.lower() == 'p':  # add a question
             menuCondition = False
@@ -29,13 +33,14 @@ def mainMenu(db):
             task = input("You inputted an incorrect choice, please try again: ")
             continue
 
-
 def specificMenu(user, questionId, db):
+
     menuCondition = True
     task = input("""Select the task you would like to perform. You can also type E to exit\n 
     (A): Post an Answer\n 
     (L): List Answers for the Post\n
     (V): Vote on Selected Post\n
+    (E): Exit Program\n
     (R): Return to Main Menu\n""")
     while menuCondition:
         if task.lower() == 'a':  # add an answer
@@ -46,7 +51,7 @@ def specificMenu(user, questionId, db):
             listAnswers(user, questionId, db)
         elif task.lower() == 'r':  # return to main menu
             menuCondition = False
-            mainMenu(db)
+            mainMenu(user, db)
         elif task.lower() == 'v':  # add a vote to the question
             addVote(user, questionId, db)
         elif task.lower() == 'e':  # exit program
@@ -151,7 +156,7 @@ def postQuestion(user, db):
     	newValue = {"$set":{ "OwnerUserId" : user }}
     	posts.update_one(oldValue,newValue)
     print("New question added successfully")
-    mainMenu(db)
+    mainMenu(user, db)
 
 
 def searchQuestion(user,db):
@@ -166,7 +171,7 @@ def searchQuestion(user,db):
         else:
             kw_check = False
     if keywords.lower() == '0':
-        mainMenu(db)
+        mainMenu(user, db)
     keywords = "".join(keywords.split()).split(",")  # user inputted keywords
 
     print(keywords)
@@ -221,7 +226,7 @@ def answerQuestion(user, questionId, db):
     	newValue = {"$set":{ "OwnerUserId" : user }}
     	posts.update_one(oldValue,newValue)
     print("New answer added successfully")
-    mainMenu(db)
+    mainMenu(user, db)
 
 
 def listAnswers(user, questionId, db):
@@ -258,7 +263,7 @@ def listAnswers(user, questionId, db):
 		print("Answer "+aid+" Score: " + str(score))
 	#allow user to select answer to print full document
 	if not answers:
-		mainMenu(db)
+		mainMenu(user, db)
 	else:
 		aidSelect = input("Select an answer by typing its id as shown above: ")
 		result = posts.find_one({"Id": aidSelect})
@@ -275,7 +280,7 @@ def listAnswers(user, questionId, db):
 				addVote(user, aidSelect, db)
 			elif task.lower() == 'r':  # return to main menu
 				menuCondition = False
-				mainMenu(db)
+				mainMenu(user, db)
 			elif task.lower() == 'e':  # exit program
 				quit()
 			else:
@@ -300,13 +305,13 @@ def addVote(user, questionId, db):
         newValue = {"$set":{ "Score" : newScore }}
         db.Posts.update_one(oldValue,newValue)
         print("vote added succesfully")
-        mainMenu(db)
+        mainMenu(user, db)
     voteObject = db.Votes.find({"UserId": user, "PostId": questionId})
     splicedDay = getCurrentDay()
     for x in voteObject:
         if x["CreationDate"][:9] == splicedDay[:9]:
             print("user has already voted today!")
-            mainMenu(db)
+            mainMenu(user, db)
         else:
             continue
     newVote = {"Id": newPostId(db),
@@ -324,14 +329,14 @@ def addVote(user, questionId, db):
     newValue = {"$set":{ "Score" : newScore }}
     db.Posts.update_one(oldValue,newValue)    
     print("vote added succesfully")
-    mainMenu(db)
+    mainMenu(user, db)
 
 
 def main():
     # port = input("Please enter the port you'd like to run the database on: ")
     client = pymongo.MongoClient("localhost", 27017)
     db = client['291db']
-    mainMenu(db)
+    login(db)
     #searchQuestion(user,db)
 
 
