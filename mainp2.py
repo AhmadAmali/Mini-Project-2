@@ -1,6 +1,7 @@
 ## mini project 2, CMPUT291
 
 import pymongo
+import datetime
 
 
 def mainMenu(db):
@@ -18,19 +19,20 @@ def mainMenu(db):
             postQuestion(user, db)
         elif task.lower() == 's':  # search for a post
             menuCondition = False
-            searchQuestion(user)
+            searchQuestion(user,db)
         elif task.lower() == 'e':  # exit program
             quit()
         else:
             task = input("You inputted an incorrect choice, please try again: ")
             continue
 
-def specificMenu(user, questionId):
+def specificMenu(user, questionId,db):
 
     menuCondition = True
     task = input("""Select the task you would like to perform. You can also type E to exit\n 
     (A): Post an Answer\n 
     (L): List Answers for the Post\n
+    (V): Vote on Selected Post\n
     (R): Return to Main Menu\n""")
     while menuCondition:
         if task.lower() == 'a':  # add an answer
@@ -42,8 +44,8 @@ def specificMenu(user, questionId):
         elif task.lower() == 'r':  # return to main menu
             menuCondition = False
             mainMenu(user)
-        elif task.lower() == 'e':  # exit program
-            quit()
+        elif task.lower() == 'v':  # exit program
+            addVote(user, questionId,db)
         else:
             task = input("You inputted an incorrect choice, please try again: ")
             continue
@@ -91,14 +93,20 @@ def newPostId(db):
     return maxVal
 
 #search for current largest vote id and increment by 1
-def newVoteId():
+def newVoteId(db):
 	#returns document: {"Id": max}
     posts = db["Votes"]
     maxObject = db.Posts.find().sort("Id", -1).limit(1)
     for x in maxObject:
-        maxID = x['Id']
+        maxID = x['Id']    
     maxID = int(maxID) + 1
     return maxID
+
+def getCurrentDay():
+    current = datetime.datetime.now()
+    current = str(current)
+    new_current = current.replace(" ", "T")
+    return new_current
 
 def postQuestion(user, db):
     title = input("Please enter your question title: ")
@@ -109,12 +117,12 @@ def postQuestion(user, db):
     posts = db["Posts"]
     newQuestion =       {"Id": newPostId(db),
                          "PostTypeId": "1",
-                         "CreationDate": date('now'),
+                         "CreationDate": getCurrentDay(),
                          "Score": 0,
                          "ViewCount": 0,
                          "Body": body,
                          "OwnerUserId": "11",
-                         "LastActivityDate": date('now'),
+                         "LastActivityDate": getCurrentDay(),
                          "Title": title,
                          "Tags": Tags,
                          "AnswerCount": 0,
@@ -124,10 +132,11 @@ def postQuestion(user, db):
                          }
     posts.insert_one(newQuestion)
     print("New question added successfully")
-    mainMenu()
+    mainMenu(db)
     
-def searchQuestion(user):
-    specificMenu(user, questionId)
+def searchQuestion(user,db):
+    questionId = input("enter your question ID you'd like to perform actions on: ")
+    specificMenu(user, questionId,db)
 
 def answerQuestion(user, questionId):
     text = input("Enter the text for your answer: ")
@@ -195,15 +204,17 @@ def listAnswers(user, questionId):
             continue
 
 
-def addVote(user, questionId):
+def addVote(user, questionId,db):
     votes = db["Votes"]
-    newVote = {"Id": newPostId(),
+    newVote = {"Id": newVoteId(db),
                "PostId": questionId,
                "VoteTypeId": "2",
                "UserId": user,
-               "CreationDate": date('now')
+               "CreationDate": getCurrentDay()
                }
-    Votes.insert_one(newVote)
+    votes.insert_one(newVote)
+    print("vote added succesfully")
+    mainMenu(db)
 
 
 def main():
