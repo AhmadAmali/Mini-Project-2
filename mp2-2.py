@@ -38,14 +38,14 @@ def createCollections(db):
         data = json.loads(read_data)
         tags.insert_many(data['tags']['row'])
         end = time.time()
-        print("Done Tags ", end - start)
+        print("Done Tags in ", end - start)
 
     with open('Votes.json') as file:
         read_data = file.read()
         data = json.loads(read_data)
         votes.insert_many(data['votes']['row'])
         end = time.time()
-        print("Done Votes ", end - start)
+        print("Done Votes in ", end - start)
 
         colList = db.list_collection_names()
         if "tags" in colList:
@@ -83,7 +83,7 @@ def createTerms(db):
         except:
             pass
     end = time.time()
-    print("TIME: ", end - start)
+    print("Terms Created in ", end - start)
 
 
 def main():
