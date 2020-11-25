@@ -55,7 +55,7 @@ def specificMenu(user, questionId):
 def displayReport(user):
     print("User report for " + user + "...\n")
     # questions = all question posts owned by the user
-    #questions = db.posts.find("$and":[{"OwnerUserId": user},{"PostTypeId": "1"}])
+    #questions = db.posts.find({},"$and":[{"OwnerUserId": user},{"PostTypeId": "1"}])
     # count number of questions owned
     countAggr = questions.aggregate({ "$count": "qcount" })
     count = countAggr["qcount"]
@@ -81,18 +81,24 @@ def displayReport(user):
     print("Number of votes: " + count)
 
 #search for current largest post id and increment by 1
-def newPostId():
-	#returns document: {"Id": max}
-    #maxDoc = db.posts.aggregate( Id: {"$max" : "$Id"} )
-    maxId = max_doc["Id"]
-    return maxId+1
+def newPostId(db):
+    #returns document: {"Id": max}
+    posts = db["Posts"]
+    maxDoc = db.Posts.find().sort("Id", -1).limit(1)
+    for x in maxDoc:
+        maxVal = x['Id']
+    maxVal = int(maxVal) + 1
+    return maxVal
 
 #search for current largest vote id and increment by 1
 def newVoteId():
 	#returns document: {"Id": max}
-    #maxDoc = db.votes.aggregate( Id: {$max : "$Id"} )
-    maxId = max_doc["Id"]
-    return maxId+1
+    posts = db["Votes"]
+    maxObject = db.Posts.find().sort("Id", -1).limit(1)
+    for x in maxObject:
+        maxID = x['Id']
+    maxID = int(maxID) + 1
+    return maxID
 
 def postQuestion(user, db):
     title = input("Please enter your question title: ")
@@ -101,7 +107,7 @@ def postQuestion(user, db):
     Tags = "".join(Tags.split())
     Tags = Tags.split(",") # returns a list with the seperated tags as such, if the input was: "<question>, <test>" Output would be ['<question>', '<test>']
     posts = db["Posts"]
-    newQuestion =       {"Id": newPostId(),
+    newQuestion =       {"Id": newPostId(db),
                          "PostTypeId": "1",
                          "CreationDate": date('now'),
                          "Score": 0,
